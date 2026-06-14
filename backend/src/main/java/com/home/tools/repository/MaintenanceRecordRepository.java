@@ -11,4 +11,6 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
     Page<MaintenanceRecord> findByToolId(Long toolId, Pageable pageable);
 
     List<MaintenanceRecord> findByToolId(Long toolId);
+
+    List<MaintenanceRecord> findByToolIdOrderByMaintenanceDateDesc(Long toolId);
 }

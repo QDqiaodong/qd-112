@@ -11,4 +11,6 @@ public interface UsageRecordRepository extends JpaRepository<UsageRecord, Long> 
     Page<UsageRecord> findByToolId(Long toolId, Pageable pageable);
 
     List<UsageRecord> findByToolId(Long toolId);
+
+    List<UsageRecord> findByToolIdOrderByUseDateDesc(Long toolId);
 }

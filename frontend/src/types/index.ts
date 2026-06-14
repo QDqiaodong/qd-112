@@ -1,5 +1,6 @@
 export type ToolStatus = 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE' | 'LOANED' | 'LOST'
 export type MaintenanceType = 'CLEAN' | 'OIL' | 'TIGHTEN' | 'INSPECT' | 'REPAIR' | 'OTHER'
+export type TrackType = 'USAGE' | 'MAINTENANCE' | 'INVENTORY' | 'STATUS_CHANGE'
 
 export interface Tool {
   id: number
@@ -146,6 +147,23 @@ export interface ApiResponse<T = any> {
   code: number
   message: string
   data: T
+}
+
+export interface MaintenanceTrack {
+  type: TrackType
+  recordId: number
+  actionDate: string
+  actionTime: string
+  actionName: string
+  description: string
+  durationMinutes: number
+  cost: number
+  operator: string
+  oldStatus?: ToolStatus
+  newStatus?: ToolStatus
+  maintenanceType?: MaintenanceType
+  inventoryChecked?: boolean
+  inventoryActualStatus?: string
 }
 
 export interface StatsOverview {

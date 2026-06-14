@@ -1,6 +1,7 @@
 package com.home.tools.controller;
 
 import com.home.tools.dto.ApiResponse;
+import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.dto.ToolDTO;
 import com.home.tools.entity.Tool;
@@ -53,5 +54,10 @@ public class ToolController {
     @GetMapping("/due-maintenance")
     public ApiResponse<List<Tool>> findDueMaintenance() {
         return ApiResponse.ok(toolService.findDueMaintenance());
+    }
+
+    @GetMapping("/{id}/maintenance-track")
+    public ApiResponse<List<MaintenanceTrackDTO>> getMaintenanceTrack(@PathVariable Long id) {
+        return ApiResponse.ok(toolService.getMaintenanceTrack(id));
     }
 }

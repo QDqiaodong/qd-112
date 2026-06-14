@@ -1,5 +1,6 @@
 package com.home.tools.service;
 
+import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.dto.ToolDTO;
 import com.home.tools.entity.Tool;
@@ -23,4 +24,6 @@ public interface ToolService {
     List<Tool> findDueMaintenance();
 
     Map<String, Long> countByStatus();
+
+    List<MaintenanceTrackDTO> getMaintenanceTrack(Long toolId);
 }

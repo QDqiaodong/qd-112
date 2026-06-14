@@ -103,3 +103,15 @@ CREATE TABLE IF NOT EXISTS inventory_item (
     INDEX idx_tool_id (tool_id),
     UNIQUE KEY uk_inventory_tool (inventory_id, tool_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS tool_status_history (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    tool_id BIGINT NOT NULL,
+    old_status VARCHAR(20) NOT NULL,
+    new_status VARCHAR(20) NOT NULL,
+    operator VARCHAR(50),
+    reason VARCHAR(500),
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_tool_id (tool_id),
+    INDEX idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

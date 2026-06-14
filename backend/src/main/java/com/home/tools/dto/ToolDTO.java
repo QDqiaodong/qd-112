@@ -21,6 +21,8 @@ public class ToolDTO {
     private LocalDate lastMaintenanceDate;
     private LocalDate nextMaintenanceDate;
     private Integer maintenanceCycleDays;
+    private String operator;
+    private String statusReason;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -50,4 +52,8 @@ public class ToolDTO {
     public void setNextMaintenanceDate(LocalDate nextMaintenanceDate) { this.nextMaintenanceDate = nextMaintenanceDate; }
     public Integer getMaintenanceCycleDays() { return maintenanceCycleDays; }
     public void setMaintenanceCycleDays(Integer maintenanceCycleDays) { this.maintenanceCycleDays = maintenanceCycleDays; }
+    public String getOperator() { return operator; }
+    public void setOperator(String operator) { this.operator = operator; }
+    public String getStatusReason() { return statusReason; }
+    public void setStatusReason(String statusReason) { this.statusReason = statusReason; }
 }

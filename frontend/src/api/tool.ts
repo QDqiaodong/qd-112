@@ -1,5 +1,5 @@
 import request from './request'
-import type { Tool, PageResult, ApiResponse } from '@/types'
+import type { Tool, PageResult, ApiResponse, MaintenanceTrack } from '@/types'
 
 export function getTools(params?: Record<string, any>): Promise<ApiResponse<PageResult<Tool>>> {
   return request.get('/tools', { params })
@@ -13,7 +13,7 @@ export function createTool(data: Partial<Tool>): Promise<ApiResponse<Tool>> {
   return request.post('/tools', data)
 }
 
-export function updateTool(id: number, data: Partial<Tool>): Promise<ApiResponse<Tool>> {
+export function updateTool(id: number, data: Partial<Tool> & { operator?: string; statusReason?: string }): Promise<ApiResponse<Tool>> {
   return request.put(`/tools/${id}`, data)
 }
 
@@ -23,4 +23,8 @@ export function deleteTool(id: number): Promise<ApiResponse<null>> {
 
 export function getDueMaintenanceTools(): Promise<ApiResponse<Tool[]>> {
   return request.get('/tools/due-maintenance')
+}
+
+export function getMaintenanceTrack(toolId: number): Promise<ApiResponse<MaintenanceTrack[]>> {
+  return request.get(`/tools/${toolId}/maintenance-track`)
 }
