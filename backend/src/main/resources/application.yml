@@ -1,0 +1,21 @@
+# ======================================================
+# Spring Boot 主配置
+# 后端服务端口 8088，仅绑定 IPv4 回环地址
+# ======================================================
+spring:
+  profiles:
+    active: dev
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method

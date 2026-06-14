@@ -1,0 +1,70 @@
+# ======================================================
+# 后端 .dockerignore - 排除构建上下文无关文件
+# 减少 Docker 构建上下文传输，提升构建速度
+# ======================================================
+
+# 构建产物
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+.cache/
+.tmp/
+
+# IDE 配置
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.project
+.classpath
+.factorypath
+
+# 系统文件
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# 截图与测试产物
+screenshots/
+test-results/
+playwright-report/
+
+# 文档
+README.md
+*.md
+docs/
+.trae/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# 测试
+target/test-classes/
+*Test.java
+*Tests.java
+src/test/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# Maven 本地仓库
+.mvn/
+!mvnw
+!mvnw.cmd

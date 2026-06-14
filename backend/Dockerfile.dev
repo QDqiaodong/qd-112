@@ -1,0 +1,8 @@
+FROM maven:3.9-eclipse-temurin-17
+WORKDIR /app
+COPY pom.xml settings.xml ./
+RUN mkdir -p /root/.m2 && cp settings.xml /root/.m2/settings.xml
+RUN mvn dependency:resolve -s /root/.m2/settings.xml -B
+COPY src ./src
+EXPOSE 19040
+CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]

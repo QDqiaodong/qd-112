@@ -1,0 +1,53 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import type { Inventory, InventoryItem } from '@/types'
+import * as inventoryApi from '@/api/inventory'
+
+export const useInventoryStore = defineStore('inventory', () => {
+  const inventories = ref<Inventory[]>([])
+  const currentInventory = ref<Inventory | null>(null)
+  const inventoryItems = ref<InventoryItem[]>([])
+  const loading = ref(false)
+
+  async function fetchInventories(params?: Record<string, any>) {
+    loading.value = true
+    try {
+      const res = await inventoryApi.getInventories(params)
+      inventories.value = res.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchInventory(id: number) {
+    loading.value = true
+    try {
+      const res = await inventoryApi.getInventory(id)
+      currentInventory.value = res.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchInventoryItems(inventoryId: number) {
+    loading.value = true
+    try {
+      const res = await inventoryApi.getInventoryItems(inventoryId)
+      inventoryItems.value = res.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createInventory() {
+    const res = await inventoryApi.createInventory()
+    return res.data
+  }
+
+  async function updateItem(inventoryId: number, itemId: number, data: Record<string, any>) {
+    const res = await inventoryApi.updateInventoryItem(inventoryId, itemId, data)
+    return res.data
+  }
+
+  return { inventories, currentInventory, inventoryItems, loading, fetchInventories, fetchInventory, fetchInventoryItems, createInventory, updateItem }
+})

@@ -1,0 +1,35 @@
+# ======================================================
+# 根目录 .dockerignore - 排除根目录无关文件
+# ======================================================
+
+# 依赖和构建产物
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/target/
+**/build/
+**/out/
+**/.cache/
+**/.vite/
+
+# 日志、临时文件、截图和测试产物
+**/logs/
+**/*.log
+**/*.tmp
+**/*.temp
+**/tmp/
+**/temp/
+**/screenshots/
+**/test-results/
+**/playwright-report/
+**/coverage/
+
+# IDE / OS / Git
+**/.idea/
+**/.vscode/
+**/*.iml
+**/.DS_Store
+**/Thumbs.db
+.git/
+.gitignore
+.trae/

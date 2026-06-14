@@ -1,0 +1,13 @@
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /app
+COPY pom.xml settings.xml ./
+RUN mkdir -p /root/.m2 && cp settings.xml /root/.m2/settings.xml
+RUN mvn dependency:resolve -s /root/.m2/settings.xml -B
+COPY src ./src
+RUN mvn package -DskipTests -B && rm -rf target/classes && rm -rf target/generated-sources
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+EXPOSE 19040
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=prod"]

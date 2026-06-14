@@ -1,0 +1,48 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import type { Tool } from '@/types'
+import * as toolApi from '@/api/tool'
+
+export const useToolStore = defineStore('tool', () => {
+  const tools = ref<Tool[]>([])
+  const currentTool = ref<Tool | null>(null)
+  const total = ref(0)
+  const loading = ref(false)
+
+  async function fetchTools(params?: Record<string, any>) {
+    loading.value = true
+    try {
+      const res = await toolApi.getTools(params)
+      tools.value = res.data.list
+      total.value = res.data.total
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchTool(id: number) {
+    loading.value = true
+    try {
+      const res = await toolApi.getTool(id)
+      currentTool.value = res.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createTool(data: Partial<Tool>) {
+    const res = await toolApi.createTool(data)
+    return res.data
+  }
+
+  async function updateTool(id: number, data: Partial<Tool>) {
+    const res = await toolApi.updateTool(id, data)
+    return res.data
+  }
+
+  async function deleteTool(id: number) {
+    await toolApi.deleteTool(id)
+  }
+
+  return { tools, currentTool, total, loading, fetchTools, fetchTool, createTool, updateTool, deleteTool }
+})

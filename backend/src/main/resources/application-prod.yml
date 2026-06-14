@@ -1,0 +1,49 @@
+# ======================================================
+# Spring Boot 生产环境配置（Docker容器内运行）
+# 容器内部需监听 0.0.0.0:8080 才能被 docker 网络访问
+# ======================================================
+server:
+  address: 0.0.0.0
+  port: 8080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 50
+      idle-timeout: 60000
+      connection-timeout: 30000
+      max-lifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
+      timeout: 3000
+      jedis:
+        pool:
+          min-idle: 10
+          max-idle: 50
+          max-active: 50
+          max-wait: 3000
+
+logging:
+  level:
+    com.home.tools: INFO
+    org.hibernate.SQL: WARN
+  file:
+    name: /var/log/home-tools/application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30

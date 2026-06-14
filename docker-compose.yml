@@ -1,0 +1,128 @@
+# ======================================================
+# 家用工具维护与使用台账 - Docker Compose 编排
+# 端口映射统一绑定 127.0.0.1，使用 .env 变量管理
+# ======================================================
+services:
+
+  mysql:
+    image: ${DOCKER_REGISTRY}library/mysql:${MYSQL_IMAGE_VERSION}
+    container_name: ${PROJECT_NAME}-mysql
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MYSQL_PORT}:${MYSQL_CONTAINER_PORT}"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - home-tools-net
+
+  redis:
+    image: ${DOCKER_REGISTRY}library/redis:${REDIS_IMAGE_VERSION}
+    container_name: ${PROJECT_NAME}-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:${REDIS_CONTAINER_PORT}"
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - home-tools-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
+        MAVEN_IMAGE_VERSION: ${MAVEN_IMAGE_VERSION}
+        JRE_IMAGE_VERSION: ${JRE_IMAGE_VERSION}
+    image: ${PROJECT_NAME}/backend:latest
+    container_name: ${PROJECT_NAME}-backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${BACKEND_PORT}:${BACKEND_CONTAINER_PORT}"
+    volumes:
+      - ./backend/src/main/resources:/app/resources:ro
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/stats/overview || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - home-tools-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        DOCKER_REGISTRY: ${DOCKER_REGISTRY}
+        NODE_IMAGE_VERSION: ${NODE_IMAGE_VERSION}
+        NGINX_IMAGE_VERSION: ${NGINX_IMAGE_VERSION}
+    image: ${PROJECT_NAME}/frontend:latest
+    container_name: ${PROJECT_NAME}-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT}:${NGINX_CONTAINER_PORT}"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - home-tools-net
+
+volumes:
+  mysql_data:
+    name: ${PROJECT_NAME}-mysql-data
+  redis_data:
+    name: ${PROJECT_NAME}-redis-data
+
+networks:
+  home-tools-net:
+    name: ${PROJECT_NAME}-net
+    driver: bridge

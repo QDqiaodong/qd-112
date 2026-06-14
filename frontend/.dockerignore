@@ -1,0 +1,60 @@
+# ======================================================
+# 前端 .dockerignore - 排除构建上下文无关文件
+# 减少 Docker 构建上下文传输，提升构建速度
+# ======================================================
+
+# 依赖目录
+node_modules/
+
+# 构建产物
+dist/
+build/
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+.cache/
+.tmp/
+
+# IDE 配置
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.project
+.classpath
+
+# 系统文件
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# 截图与测试产物
+screenshots/
+test-results/
+playwright-report/
+
+# 文档
+README.md
+*.md
+docs/
+.trae/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# 测试
+coverage/
+*.test.*
+*.spec.*
+__tests__/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
