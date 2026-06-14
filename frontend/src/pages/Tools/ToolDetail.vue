@@ -236,17 +236,26 @@ const infoRows = computed(() => {
 onMounted(async () => {
   const id = Number(route.params.id)
   await toolStore.fetchTool(id)
+
   try {
-    const [usageRes, maintRes, trackRes] = await Promise.all([
-      getUsageByTool(id, { size: 20 }),
-      getMaintenanceByTool(id, { size: 20 }),
-      getMaintenanceTrack(id)
-    ])
+    const usageRes = await getUsageByTool(id, { size: 20 })
     usageRecords.value = usageRes.data?.list || []
+  } catch (e) {
+    console.warn('获取使用记录失败', e)
+  }
+
+  try {
+    const maintRes = await getMaintenanceByTool(id, { size: 20 })
     maintenanceRecords.value = maintRes.data?.list || []
+  } catch (e) {
+    console.warn('获取保养记录失败', e)
+  }
+
+  try {
+    const trackRes = await getMaintenanceTrack(id)
     maintenanceTracks.value = trackRes.data || []
-  } catch {
-    // silently handle
+  } catch (e) {
+    console.warn('获取维护轨迹失败', e)
   }
 })
 </script>

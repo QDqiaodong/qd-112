@@ -35,6 +35,21 @@
           <el-input-number v-model="form.maintenanceCycleDays" :min="0" />
           <span class="ml-2 text-sm text-gray-400">天</span>
         </el-form-item>
+        <el-form-item v-if="isEdit" label="工具状态" prop="status">
+          <el-select v-model="form.status" placeholder="请选择工具状态">
+            <el-option label="可用" value="AVAILABLE" />
+            <el-option label="使用中" value="IN_USE" />
+            <el-option label="保养中" value="MAINTENANCE" />
+            <el-option label="已借出" value="LOANED" />
+            <el-option label="已遗失" value="LOST" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="isEdit && statusChanged" label="状态变更原因" prop="statusReason">
+          <el-input v-model="form.statusReason" type="textarea" :rows="2" placeholder="请输入状态变更原因" />
+        </el-form-item>
+        <el-form-item v-if="isEdit && statusChanged" label="操作人" prop="operator">
+          <el-input v-model="form.operator" placeholder="请输入操作人姓名" />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSubmit">提交</el-button>
           <el-button @click="router.back()">取消</el-button>
@@ -52,6 +67,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { useToolStore } from '@/stores/tool'
 import { useCategoryStore } from '@/stores/category'
 import CategoryCascade from '@/components/CategoryCascade.vue'
+import type { ToolStatus, Tool } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,6 +76,7 @@ const categoryStore = useCategoryStore()
 
 const isEdit = computed(() => !!route.params.id)
 const formRef = ref<FormInstance>()
+const originalStatus = ref<ToolStatus | ''>('')
 
 const form = reactive({
   name: '',
@@ -72,7 +89,16 @@ const form = reactive({
   location: '',
   purchaseDate: '',
   price: undefined as number | undefined,
-  maintenanceCycleDays: undefined as number | undefined
+  maintenanceCycleDays: undefined as number | undefined,
+  status: '' as ToolStatus | '',
+  statusReason: '',
+  operator: ''
+})
+
+const statusChanged = computed(() => {
+  if (!isEdit.value) return false
+  if (!originalStatus.value) return false
+  return form.status !== originalStatus.value
 })
 
 const categoryValue = computed({
@@ -86,7 +112,31 @@ const categoryValue = computed({
 const rules: FormRules = {
   name: [{ required: true, message: '请输入工具名称', trigger: 'blur' }],
   categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
-  location: [{ required: true, message: '请输入存放位置', trigger: 'blur' }]
+  location: [{ required: true, message: '请输入存放位置', trigger: 'blur' }],
+  statusReason: [
+    {
+      validator: (_rule, value, callback) => {
+        if (statusChanged.value && !value) {
+          callback(new Error('请输入状态变更原因'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  operator: [
+    {
+      validator: (_rule, value, callback) => {
+        if (statusChanged.value && !value) {
+          callback(new Error('请输入操作人'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
 }
 
 onMounted(async () => {
@@ -106,8 +156,10 @@ onMounted(async () => {
         location: tool.location,
         purchaseDate: tool.purchaseDate,
         price: tool.price,
-        maintenanceCycleDays: tool.maintenanceCycleDays
+        maintenanceCycleDays: tool.maintenanceCycleDays,
+        status: tool.status
       })
+      originalStatus.value = tool.status
     }
   }
 })
@@ -115,10 +167,41 @@ onMounted(async () => {
 async function handleSubmit() {
   await formRef.value?.validate()
   if (isEdit.value) {
-    await toolStore.updateTool(Number(route.params.id), form)
+    const updateData: Partial<Tool> & { operator?: string; statusReason?: string } = {
+      name: form.name,
+      model: form.model,
+      brand: form.brand,
+      categoryId: form.categoryId,
+      subCategoryId: form.subCategoryId,
+      purpose: form.purpose,
+      specification: form.specification,
+      location: form.location,
+      purchaseDate: form.purchaseDate,
+      price: form.price,
+      maintenanceCycleDays: form.maintenanceCycleDays
+    }
+    if (statusChanged.value && form.status) {
+      updateData.status = form.status as ToolStatus
+      updateData.statusReason = form.statusReason
+      updateData.operator = form.operator
+    }
+    await toolStore.updateTool(Number(route.params.id), updateData)
     ElMessage.success('更新成功')
   } else {
-    await toolStore.createTool(form)
+    const createData: Partial<Tool> = {
+      name: form.name,
+      model: form.model,
+      brand: form.brand,
+      categoryId: form.categoryId,
+      subCategoryId: form.subCategoryId,
+      purpose: form.purpose,
+      specification: form.specification,
+      location: form.location,
+      purchaseDate: form.purchaseDate,
+      price: form.price,
+      maintenanceCycleDays: form.maintenanceCycleDays
+    }
+    await toolStore.createTool(createData)
     ElMessage.success('创建成功')
   }
   router.push('/tools')

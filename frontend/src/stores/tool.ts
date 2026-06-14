@@ -35,7 +35,7 @@ export const useToolStore = defineStore('tool', () => {
     return res.data
   }
 
-  async function updateTool(id: number, data: Partial<Tool>) {
+  async function updateTool(id: number, data: Partial<Tool> & { operator?: string; statusReason?: string }) {
     const res = await toolApi.updateTool(id, data)
     return res.data
   }
