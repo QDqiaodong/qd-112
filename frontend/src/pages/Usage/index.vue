@@ -2,7 +2,7 @@
   <div class="p-6">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold text-gray-800">使用记录</h2>
-      <el-button type="primary" @click="showDialog = true">
+      <el-button type="primary" @click="openDialog">
         <Plus :size="16" class="mr-1" /> 新增记录
       </el-button>
     </div>
@@ -52,11 +52,49 @@
       <div v-else class="text-center py-10 text-gray-400">暂无使用记录</div>
     </div>
 
-    <el-dialog v-model="showDialog" title="新增使用记录" width="500px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+    <el-dialog v-model="showDialog" title="新增使用记录" width="560px" @closed="resetForm">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="工具" prop="toolId">
-          <el-input-number v-model="form.toolId" :min="1" placeholder="工具ID" class="w-full" />
+          <el-select
+            v-model="form.toolId"
+            placeholder="请选择工具"
+            filterable
+            class="w-full"
+            @change="handleToolChange"
+          >
+            <el-option
+              v-for="tool in toolOptions"
+              :key="tool.id"
+              :label="`${tool.name}（ID: ${tool.id}）`"
+              :value="tool.id"
+            />
+          </el-select>
         </el-form-item>
+
+        <template v-if="selectedTool">
+          <el-form-item label="分类">
+            <span class="text-gray-700">{{ categoryLabel }}</span>
+          </el-form-item>
+          <el-form-item label="位置">
+            <span class="text-gray-700">{{ selectedTool.location }}</span>
+          </el-form-item>
+          <el-form-item label="当前状态">
+            <StatusBadge :status="selectedTool.status" />
+          </el-form-item>
+          <el-form-item label="最近保养">
+            <span class="text-gray-700">{{ selectedTool.lastMaintenanceDate || '暂无' }}</span>
+          </el-form-item>
+
+          <el-alert
+            v-if="statusConflict"
+            :title="statusConflict"
+            type="warning"
+            show-icon
+            :closable="false"
+            class="mb-4"
+          />
+        </template>
+
         <el-form-item label="使用场景" prop="scenario">
           <el-input v-model="form.scenario" placeholder="请输入使用场景" />
         </el-form-item>
@@ -75,26 +113,34 @@
       </el-form>
       <template #footer>
         <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">确定</el-button>
+        <el-button type="primary" :disabled="!!statusConflict" @click="handleCreate">确定</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from 'lucide-vue-next'
 import { useUsageStore } from '@/stores/usage'
+import { useToolStore } from '@/stores/tool'
+import { useCategoryStore } from '@/stores/category'
 import { usePagination } from '@/composables/usePagination'
+import StatusBadge from '@/components/StatusBadge.vue'
+import type { Tool } from '@/types'
 
 const usageStore = useUsageStore()
+const toolStore = useToolStore()
+const categoryStore = useCategoryStore()
 const pagination = usePagination()
 const showDialog = ref(false)
 const formRef = ref<FormInstance>()
 const dateRange = ref<string[]>([])
 const toolKeyword = ref('')
+const toolOptions = ref<Tool[]>([])
+const selectedTool = ref<Tool | null>(null)
 
 const form = reactive({
   toolId: undefined as number | undefined,
@@ -106,14 +152,34 @@ const form = reactive({
 })
 
 const rules: FormRules = {
-  toolId: [{ required: true, message: '请输入工具ID', trigger: 'blur' }],
+  toolId: [{ required: true, message: '请选择工具', trigger: 'change' }],
   scenario: [{ required: true, message: '请输入使用场景', trigger: 'blur' }],
   useDate: [{ required: true, message: '请选择使用日期', trigger: 'change' }],
   durationMinutes: [{ required: true, message: '请输入时长', trigger: 'blur' }],
   operator: [{ required: true, message: '请输入操作人', trigger: 'blur' }]
 }
 
-onMounted(() => loadData())
+const categoryLabel = computed(() => {
+  if (!selectedTool.value) return ''
+  const tree = categoryStore.categoryTree
+  const cat = tree.find((c) => c.id === selectedTool.value!.categoryId)
+  if (!cat) return ''
+  const sub = cat.children?.find((s) => s.id === selectedTool.value!.subCategoryId)
+  return sub ? `${cat.name} / ${sub.name}` : cat.name
+})
+
+const statusConflict = computed(() => {
+  if (!selectedTool.value) return ''
+  const status = selectedTool.value.status
+  if (status === 'MAINTENANCE') return '该工具当前处于「保养中」状态，无法录入使用记录'
+  if (status === 'LOST') return '该工具当前处于「遗失」状态，无法录入使用记录'
+  return ''
+})
+
+onMounted(() => {
+  loadData()
+  categoryStore.fetchCategoryTree()
+})
 
 function loadData() {
   const params: Record<string, any> = {
@@ -133,12 +199,25 @@ function handleSearch() {
   loadData()
 }
 
+async function openDialog() {
+  toolOptions.value = await toolStore.fetchToolOptions()
+  showDialog.value = true
+}
+
+function handleToolChange(toolId: number) {
+  selectedTool.value = toolOptions.value.find((t) => t.id === toolId) || null
+}
+
+function resetForm() {
+  Object.assign(form, { toolId: undefined, scenario: '', useDate: '', durationMinutes: undefined, operator: '', remarks: '' })
+  selectedTool.value = null
+}
+
 async function handleCreate() {
   await formRef.value?.validate()
   await usageStore.createUsage(form)
   ElMessage.success('创建成功')
   showDialog.value = false
-  Object.assign(form, { toolId: undefined, scenario: '', useDate: '', durationMinutes: undefined, operator: '', remarks: '' })
   loadData()
 }
 

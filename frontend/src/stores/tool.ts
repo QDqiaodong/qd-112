@@ -44,5 +44,10 @@ export const useToolStore = defineStore('tool', () => {
     await toolApi.deleteTool(id)
   }
 
-  return { tools, currentTool, total, loading, fetchTools, fetchTool, createTool, updateTool, deleteTool }
+  async function fetchToolOptions() {
+    const res = await toolApi.getTools({ page: 1, size: 9999 })
+    return res.data.list
+  }
+
+  return { tools, currentTool, total, loading, fetchTools, fetchTool, createTool, updateTool, deleteTool, fetchToolOptions }
 })
