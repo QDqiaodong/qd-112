@@ -131,7 +131,7 @@ DOCKER_REGISTRY=docker.mirrors.ustc.edu.cn
 | 镜像 | 变量 |
 |------|------|
 | Node | `NODE_IMAGE_VERSION=18-alpine` |
-| Maven | `MAVEN_IMAGE_VERSION=3.9-eclipse-temurin-17` |
+| Maven | `MAVEN_IMAGE_VERSION=3.9.6-eclipse-temurin-17` |
 | JRE | `JRE_IMAGE_VERSION=17-jre-alpine` |
 | MySQL | `MYSQL_IMAGE_VERSION=8.0-oracle` |
 | Redis | `REDIS_IMAGE_VERSION=7.2-alpine` |
