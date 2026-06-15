@@ -25,6 +25,10 @@ export function getDueMaintenanceTools(): Promise<ApiResponse<Tool[]>> {
   return request.get('/tools/due-maintenance')
 }
 
+export function getMaintenanceByMonth(year: number, month: number): Promise<ApiResponse<Tool[]>> {
+  return request.get('/tools/maintenance-by-month', { params: { year, month } })
+}
+
 export function getMaintenanceTrack(toolId: number): Promise<ApiResponse<MaintenanceTrack[]>> {
   return request.get(`/tools/${toolId}/maintenance-track`)
 }

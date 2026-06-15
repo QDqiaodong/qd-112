@@ -56,6 +56,13 @@ public class ToolController {
         return ApiResponse.ok(toolService.findDueMaintenance());
     }
 
+    @GetMapping("/maintenance-by-month")
+    public ApiResponse<List<Tool>> findMaintenanceByMonth(
+            @RequestParam Integer year,
+            @RequestParam Integer month) {
+        return ApiResponse.ok(toolService.findMaintenanceByMonth(year, month));
+    }
+
     @GetMapping("/{id}/maintenance-track")
     public ApiResponse<List<MaintenanceTrackDTO>> getMaintenanceTrack(@PathVariable Long id) {
         return ApiResponse.ok(toolService.getMaintenanceTrack(id));

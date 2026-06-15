@@ -116,6 +116,13 @@ public class ToolServiceImpl implements ToolService {
     }
 
     @Override
+    public List<Tool> findMaintenanceByMonth(int year, int month) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+        return toolRepository.findByNextMaintenanceDateBetween(startDate, endDate);
+    }
+
+    @Override
     public Map<String, Long> countByStatus() {
         Map<String, Long> counts = new LinkedHashMap<>();
         for (ToolStatus status : ToolStatus.values()) {

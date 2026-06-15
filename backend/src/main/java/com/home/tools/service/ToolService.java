@@ -23,6 +23,8 @@ public interface ToolService {
 
     List<Tool> findDueMaintenance();
 
+    List<Tool> findMaintenanceByMonth(int year, int month);
+
     Map<String, Long> countByStatus();
 
     List<MaintenanceTrackDTO> getMaintenanceTrack(Long toolId);

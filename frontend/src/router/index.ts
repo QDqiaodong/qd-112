@@ -57,6 +57,11 @@ const router = createRouter({
           path: 'location-matrix',
           name: 'LocationMatrix',
           component: () => import('@/pages/LocationMatrix/index.vue')
+        },
+        {
+          path: 'maintenance-calendar',
+          name: 'MaintenanceCalendar',
+          component: () => import('@/pages/MaintenanceCalendar/index.vue')
         }
       ]
     }

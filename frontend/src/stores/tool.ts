@@ -6,6 +6,7 @@ import * as toolApi from '@/api/tool'
 export const useToolStore = defineStore('tool', () => {
   const tools = ref<Tool[]>([])
   const currentTool = ref<Tool | null>(null)
+  const monthlyMaintenanceTools = ref<Tool[]>([])
   const total = ref(0)
   const loading = ref(false)
 
@@ -49,5 +50,15 @@ export const useToolStore = defineStore('tool', () => {
     return res.data.list
   }
 
-  return { tools, currentTool, total, loading, fetchTools, fetchTool, createTool, updateTool, deleteTool, fetchToolOptions }
+  async function fetchMonthlyMaintenance(year: number, month: number) {
+    loading.value = true
+    try {
+      const res = await toolApi.getMaintenanceByMonth(year, month)
+      monthlyMaintenanceTools.value = res.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { tools, currentTool, monthlyMaintenanceTools, total, loading, fetchTools, fetchTool, createTool, updateTool, deleteTool, fetchToolOptions, fetchMonthlyMaintenance }
 })
