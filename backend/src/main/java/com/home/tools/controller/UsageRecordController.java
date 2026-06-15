@@ -5,8 +5,10 @@ import com.home.tools.dto.PageResult;
 import com.home.tools.dto.UsageRecordDTO;
 import com.home.tools.entity.UsageRecord;
 import com.home.tools.service.UsageRecordService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,8 +25,10 @@ public class UsageRecordController {
     public ApiResponse<PageResult<UsageRecord>> list(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Long toolId) {
-        return ApiResponse.ok(usageRecordService.list(page, size, toolId));
+            @RequestParam(required = false) Long toolId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ApiResponse.ok(usageRecordService.list(page, size, toolId, startDate, endDate));
     }
 
     @GetMapping("/tool/{toolId}")

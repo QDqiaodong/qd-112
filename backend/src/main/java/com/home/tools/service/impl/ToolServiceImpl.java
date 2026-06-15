@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -101,7 +102,12 @@ public class ToolServiceImpl implements ToolService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
+        inventoryItemRepository.deleteByToolId(id);
+        usageRecordRepository.deleteByToolId(id);
+        maintenanceRecordRepository.deleteByToolId(id);
+        statusHistoryRepository.deleteByToolId(id);
         toolRepository.deleteById(id);
     }
 

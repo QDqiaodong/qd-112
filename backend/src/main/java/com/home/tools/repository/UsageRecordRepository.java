@@ -13,4 +13,10 @@ public interface UsageRecordRepository extends JpaRepository<UsageRecord, Long> 
     List<UsageRecord> findByToolId(Long toolId);
 
     List<UsageRecord> findByToolIdOrderByUseDateDesc(Long toolId);
+
+    Page<UsageRecord> findByUseDateBetween(java.time.LocalDate startDate, java.time.LocalDate endDate, Pageable pageable);
+
+    Page<UsageRecord> findByToolIdAndUseDateBetween(Long toolId, java.time.LocalDate startDate, java.time.LocalDate endDate, Pageable pageable);
+
+    void deleteByToolId(Long toolId);
 }

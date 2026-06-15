@@ -62,6 +62,9 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
 
     @Override
     public MaintenanceRecord create(MaintenanceRecordDTO dto) {
+        if (!toolRepository.existsById(dto.getToolId())) {
+            throw new RuntimeException("工具不存在，无法创建保养记录");
+        }
         MaintenanceRecord record = new MaintenanceRecord();
         copyDtoToEntity(dto, record);
         MaintenanceRecord saved = maintenanceRecordRepository.save(record);
@@ -80,6 +83,9 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
     public MaintenanceRecord update(Long id, MaintenanceRecordDTO dto) {
         MaintenanceRecord record = maintenanceRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MaintenanceRecord not found"));
+        if (!toolRepository.existsById(dto.getToolId())) {
+            throw new RuntimeException("工具不存在，无法更新保养记录");
+        }
         copyDtoToEntity(dto, record);
         return maintenanceRecordRepository.save(record);
     }

@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface UsageRecordService {
 
-    PageResult<UsageRecord> list(Integer page, Integer size, Long toolId);
+    PageResult<UsageRecord> list(Integer page, Integer size, Long toolId, java.time.LocalDate startDate, java.time.LocalDate endDate);
 
     List<UsageRecord> findByToolId(Long toolId);
 

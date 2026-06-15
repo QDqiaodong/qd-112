@@ -12,4 +12,6 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
 
     @Query("SELECT ii FROM InventoryItem ii JOIN Inventory i ON ii.inventoryId = i.id WHERE ii.toolId = :toolId ORDER BY i.inventoryDate DESC")
     List<InventoryItem> findByToolIdWithInventory(@Param("toolId") Long toolId);
+
+    void deleteByToolId(Long toolId);
 }

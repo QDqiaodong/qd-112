@@ -7,4 +7,6 @@ import java.util.List;
 public interface ToolStatusHistoryRepository extends JpaRepository<ToolStatusHistory, Long> {
 
     List<ToolStatusHistory> findByToolIdOrderByCreateTimeDesc(Long toolId);
+
+    void deleteByToolId(Long toolId);
 }

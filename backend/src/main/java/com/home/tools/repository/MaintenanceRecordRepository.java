@@ -13,4 +13,6 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
     List<MaintenanceRecord> findByToolId(Long toolId);
 
     List<MaintenanceRecord> findByToolIdOrderByMaintenanceDateDesc(Long toolId);
+
+    void deleteByToolId(Long toolId);
 }
