@@ -2,9 +2,11 @@ package com.home.tools.service.impl;
 
 import com.home.tools.dto.MaintenanceRecordDTO;
 import com.home.tools.dto.PageResult;
+import com.home.tools.entity.MaintenanceItem;
 import com.home.tools.entity.MaintenanceRecord;
 import com.home.tools.entity.MaintenanceType;
 import com.home.tools.entity.Tool;
+import com.home.tools.repository.MaintenanceItemRepository;
 import com.home.tools.repository.MaintenanceRecordRepository;
 import com.home.tools.repository.ToolRepository;
 import com.home.tools.service.MaintenanceRecordService;
@@ -19,17 +21,21 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
 
     private final MaintenanceRecordRepository maintenanceRecordRepository;
     private final ToolRepository toolRepository;
+    private final MaintenanceItemRepository maintenanceItemRepository;
 
     public MaintenanceRecordServiceImpl(MaintenanceRecordRepository maintenanceRecordRepository,
-                                        ToolRepository toolRepository) {
+                                        ToolRepository toolRepository,
+                                        MaintenanceItemRepository maintenanceItemRepository) {
         this.maintenanceRecordRepository = maintenanceRecordRepository;
         this.toolRepository = toolRepository;
+        this.maintenanceItemRepository = maintenanceItemRepository;
     }
 
     @Override
@@ -70,9 +76,7 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         MaintenanceRecord record = new MaintenanceRecord();
         copyDtoToEntity(dto, record);
         calculateTotalCost(record);
-        if (record.getNextMaintenanceDate() == null && tool.getMaintenanceCycleDays() != null) {
-            record.setNextMaintenanceDate(record.getMaintenanceDate().plusDays(tool.getMaintenanceCycleDays()));
-        }
+        resolveNextMaintenanceDate(record, tool);
         MaintenanceRecord saved = maintenanceRecordRepository.save(record);
         tool.setLastMaintenanceDate(record.getMaintenanceDate());
         if (record.getNextMaintenanceDate() != null) {
@@ -91,9 +95,7 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
                 .orElseThrow(() -> new RuntimeException("工具不存在，无法更新保养记录"));
         copyDtoToEntity(dto, record);
         calculateTotalCost(record);
-        if (record.getNextMaintenanceDate() == null && tool.getMaintenanceCycleDays() != null) {
-            record.setNextMaintenanceDate(record.getMaintenanceDate().plusDays(tool.getMaintenanceCycleDays()));
-        }
+        resolveNextMaintenanceDate(record, tool);
         MaintenanceRecord saved = maintenanceRecordRepository.save(record);
         tool.setLastMaintenanceDate(record.getMaintenanceDate());
         if (record.getNextMaintenanceDate() != null) {
@@ -101,6 +103,26 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         }
         toolRepository.save(tool);
         return saved;
+    }
+
+    private void resolveNextMaintenanceDate(MaintenanceRecord record, Tool tool) {
+        if (record.getNextMaintenanceDate() != null) {
+            return;
+        }
+        Integer cycleDays = null;
+        if (record.getMaintenanceType() != null) {
+            String typeCode = record.getMaintenanceType().name().toLowerCase();
+            Optional<MaintenanceItem> itemOpt = maintenanceItemRepository.findByCode(typeCode);
+            if (itemOpt.isPresent() && itemOpt.get().getDefaultCycleDays() != null) {
+                cycleDays = itemOpt.get().getDefaultCycleDays();
+            }
+        }
+        if (cycleDays == null && tool.getMaintenanceCycleDays() != null) {
+            cycleDays = tool.getMaintenanceCycleDays();
+        }
+        if (cycleDays != null) {
+            record.setNextMaintenanceDate(record.getMaintenanceDate().plusDays(cycleDays));
+        }
     }
 
     @Override

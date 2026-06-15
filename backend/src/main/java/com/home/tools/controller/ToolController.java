@@ -4,21 +4,30 @@ import com.home.tools.dto.ApiResponse;
 import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.dto.ToolDTO;
+import com.home.tools.entity.MaintenanceRecord;
 import com.home.tools.entity.Tool;
+import com.home.tools.entity.UsageRecord;
+import com.home.tools.service.MaintenanceRecordService;
 import com.home.tools.service.ToolService;
+import com.home.tools.service.UsageRecordService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tools")
 public class ToolController {
 
     private final ToolService toolService;
+    private final MaintenanceRecordService maintenanceRecordService;
+    private final UsageRecordService usageRecordService;
 
-    public ToolController(ToolService toolService) {
+    public ToolController(ToolService toolService,
+                          MaintenanceRecordService maintenanceRecordService,
+                          UsageRecordService usageRecordService) {
         this.toolService = toolService;
+        this.maintenanceRecordService = maintenanceRecordService;
+        this.usageRecordService = usageRecordService;
     }
 
     @GetMapping
@@ -66,5 +75,21 @@ public class ToolController {
     @GetMapping("/{id}/maintenance-track")
     public ApiResponse<List<MaintenanceTrackDTO>> getMaintenanceTrack(@PathVariable Long id) {
         return ApiResponse.ok(toolService.getMaintenanceTrack(id));
+    }
+
+    @GetMapping("/{id}/maintenance")
+    public ApiResponse<PageResult<MaintenanceRecord>> getMaintenanceByTool(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return ApiResponse.ok(maintenanceRecordService.list(page, size, id));
+    }
+
+    @GetMapping("/{id}/usage")
+    public ApiResponse<PageResult<UsageRecord>> getUsageByTool(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return ApiResponse.ok(usageRecordService.list(page, size, id, null, null));
     }
 }
