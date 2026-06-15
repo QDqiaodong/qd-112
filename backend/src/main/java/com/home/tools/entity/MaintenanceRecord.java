@@ -29,6 +29,12 @@ public class MaintenanceRecord {
 
     private BigDecimal cost;
 
+    private BigDecimal laborCost;
+
+    private BigDecimal partsCost;
+
+    private BigDecimal otherCost;
+
     private String partsReplaced;
 
     private String description;
@@ -55,6 +61,12 @@ public class MaintenanceRecord {
     public void setOperator(String operator) { this.operator = operator; }
     public BigDecimal getCost() { return cost; }
     public void setCost(BigDecimal cost) { this.cost = cost; }
+    public BigDecimal getLaborCost() { return laborCost; }
+    public void setLaborCost(BigDecimal laborCost) { this.laborCost = laborCost; }
+    public BigDecimal getPartsCost() { return partsCost; }
+    public void setPartsCost(BigDecimal partsCost) { this.partsCost = partsCost; }
+    public BigDecimal getOtherCost() { return otherCost; }
+    public void setOtherCost(BigDecimal otherCost) { this.otherCost = otherCost; }
     public String getPartsReplaced() { return partsReplaced; }
     public void setPartsReplaced(String partsReplaced) { this.partsReplaced = partsReplaced; }
     public String getDescription() { return description; }

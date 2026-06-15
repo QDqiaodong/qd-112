@@ -63,6 +63,9 @@ export interface MaintenanceRecord {
   maintenanceDate: string
   operator: string
   cost: number
+  laborCost: number
+  partsCost: number
+  otherCost: number
   partsReplaced: string
   description: string
   nextMaintenanceDate: string
@@ -75,6 +78,9 @@ export interface MaintenanceRecordDTO {
   maintenanceDate: string
   operator?: string
   cost?: number
+  laborCost?: number
+  partsCost?: number
+  otherCost?: number
   partsReplaced?: string
   description?: string
   nextMaintenanceDate?: string

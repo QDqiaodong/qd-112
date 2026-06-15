@@ -28,8 +28,20 @@
             </template>
           </el-table-column>
           <el-table-column prop="operator" label="操作人" width="100" />
-          <el-table-column prop="cost" label="费用" width="100">
-            <template #default="{ row }">¥{{ row.cost }}</template>
+          <el-table-column label="费用明细" min-width="240">
+            <template #default="{ row }">
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-500">总计：</span>
+                  <span class="font-medium text-gray-800">¥{{ row.cost || 0 }}</span>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-gray-500">
+                  <span>人工 ¥{{ row.laborCost || 0 }}</span>
+                  <span>配件 ¥{{ row.partsCost || 0 }}</span>
+                  <span>其他 ¥{{ row.otherCost || 0 }}</span>
+                </div>
+              </div>
+            </template>
           </el-table-column>
           <el-table-column prop="description" label="内容" />
           <el-table-column label="操作" width="120" fixed="right">
@@ -78,8 +90,14 @@
         <el-form-item label="操作人" prop="operator">
           <el-input v-model="form.operator" placeholder="请输入操作人" />
         </el-form-item>
-        <el-form-item label="费用" prop="cost">
-          <el-input-number v-model="form.cost" :min="0" :precision="2" />
+        <el-form-item label="人工费用">
+          <el-input-number v-model="form.laborCost" :min="0" :precision="2" class="w-full" />
+        </el-form-item>
+        <el-form-item label="配件费用">
+          <el-input-number v-model="form.partsCost" :min="0" :precision="2" class="w-full" />
+        </el-form-item>
+        <el-form-item label="其他费用">
+          <el-input-number v-model="form.otherCost" :min="0" :precision="2" class="w-full" />
         </el-form-item>
         <el-form-item label="保养日期" prop="maintenanceDate">
           <el-date-picker v-model="form.maintenanceDate" type="date" value-format="YYYY-MM-DD" placeholder="选择保养日期" class="w-full" />
@@ -126,7 +144,9 @@ const form = reactive({
   toolId: undefined as number | undefined,
   maintenanceType: '' as MaintenanceType | '',
   operator: '',
-  cost: 0,
+  laborCost: 0,
+  partsCost: 0,
+  otherCost: 0,
   maintenanceDate: '',
   description: ''
 })
@@ -163,7 +183,7 @@ async function handleCreate() {
   await maintenanceStore.createMaintenance(form as any)
   ElMessage.success('创建成功')
   showDialog.value = false
-  Object.assign(form, { toolId: undefined, maintenanceType: '', operator: '', cost: 0, maintenanceDate: '', description: '' })
+  Object.assign(form, { toolId: undefined, maintenanceType: '', operator: '', laborCost: 0, partsCost: 0, otherCost: 0, maintenanceDate: '', description: '' })
   loadData()
   maintenanceStore.fetchDue()
 }

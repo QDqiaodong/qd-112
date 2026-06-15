@@ -13,7 +13,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,33 +63,44 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
     }
 
     @Override
+    @Transactional
     public MaintenanceRecord create(MaintenanceRecordDTO dto) {
-        if (!toolRepository.existsById(dto.getToolId())) {
-            throw new RuntimeException("工具不存在，无法创建保养记录");
-        }
+        Tool tool = toolRepository.findById(dto.getToolId())
+                .orElseThrow(() -> new RuntimeException("工具不存在，无法创建保养记录"));
         MaintenanceRecord record = new MaintenanceRecord();
         copyDtoToEntity(dto, record);
-        MaintenanceRecord saved = maintenanceRecordRepository.save(record);
-        if (dto.getNextMaintenanceDate() != null) {
-            Tool tool = toolRepository.findById(dto.getToolId()).orElse(null);
-            if (tool != null) {
-                tool.setLastMaintenanceDate(dto.getMaintenanceDate());
-                tool.setNextMaintenanceDate(dto.getNextMaintenanceDate());
-                toolRepository.save(tool);
-            }
+        calculateTotalCost(record);
+        if (record.getNextMaintenanceDate() == null && tool.getMaintenanceCycleDays() != null) {
+            record.setNextMaintenanceDate(record.getMaintenanceDate().plusDays(tool.getMaintenanceCycleDays()));
         }
+        MaintenanceRecord saved = maintenanceRecordRepository.save(record);
+        tool.setLastMaintenanceDate(record.getMaintenanceDate());
+        if (record.getNextMaintenanceDate() != null) {
+            tool.setNextMaintenanceDate(record.getNextMaintenanceDate());
+        }
+        toolRepository.save(tool);
         return saved;
     }
 
     @Override
+    @Transactional
     public MaintenanceRecord update(Long id, MaintenanceRecordDTO dto) {
         MaintenanceRecord record = maintenanceRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MaintenanceRecord not found"));
-        if (!toolRepository.existsById(dto.getToolId())) {
-            throw new RuntimeException("工具不存在，无法更新保养记录");
-        }
+        Tool tool = toolRepository.findById(dto.getToolId())
+                .orElseThrow(() -> new RuntimeException("工具不存在，无法更新保养记录"));
         copyDtoToEntity(dto, record);
-        return maintenanceRecordRepository.save(record);
+        calculateTotalCost(record);
+        if (record.getNextMaintenanceDate() == null && tool.getMaintenanceCycleDays() != null) {
+            record.setNextMaintenanceDate(record.getMaintenanceDate().plusDays(tool.getMaintenanceCycleDays()));
+        }
+        MaintenanceRecord saved = maintenanceRecordRepository.save(record);
+        tool.setLastMaintenanceDate(record.getMaintenanceDate());
+        if (record.getNextMaintenanceDate() != null) {
+            tool.setNextMaintenanceDate(record.getNextMaintenanceDate());
+        }
+        toolRepository.save(tool);
+        return saved;
     }
 
     @Override
@@ -101,8 +114,21 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         record.setMaintenanceDate(dto.getMaintenanceDate());
         record.setOperator(dto.getOperator());
         record.setCost(dto.getCost());
+        record.setLaborCost(dto.getLaborCost());
+        record.setPartsCost(dto.getPartsCost());
+        record.setOtherCost(dto.getOtherCost());
         record.setPartsReplaced(dto.getPartsReplaced());
         record.setDescription(dto.getDescription());
         record.setNextMaintenanceDate(dto.getNextMaintenanceDate());
+    }
+
+    private void calculateTotalCost(MaintenanceRecord record) {
+        BigDecimal labor = record.getLaborCost() != null ? record.getLaborCost() : BigDecimal.ZERO;
+        BigDecimal parts = record.getPartsCost() != null ? record.getPartsCost() : BigDecimal.ZERO;
+        BigDecimal other = record.getOtherCost() != null ? record.getOtherCost() : BigDecimal.ZERO;
+        BigDecimal total = labor.add(parts).add(other);
+        if (total.compareTo(BigDecimal.ZERO) > 0) {
+            record.setCost(total);
+        }
     }
 }

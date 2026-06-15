@@ -59,7 +59,14 @@
                   <span class="text-xs text-gray-400">{{ record.maintenanceDate }}</span>
                 </div>
                 <p class="text-sm text-gray-500 mt-1">{{ record.description }}</p>
-                <p class="text-xs text-gray-400 mt-1">操作人：{{ record.operator }} · 费用：¥{{ record.cost }}</p>
+                <div class="text-xs text-gray-400 mt-1">
+                  <span>操作人：{{ record.operator }}</span>
+                  <span class="mx-2">·</span>
+                  <span>总费用：¥{{ record.cost || 0 }}</span>
+                </div>
+                <div class="text-xs text-gray-400 mt-0.5">
+                  人工 ¥{{ record.laborCost || 0 }} · 配件 ¥{{ record.partsCost || 0 }} · 其他 ¥{{ record.otherCost || 0 }}
+                </div>
               </div>
               <div v-if="!maintenanceRecords.length" class="text-center text-gray-400 py-8">暂无保养记录</div>
             </div>
@@ -219,9 +226,14 @@ function getTrackBadgeClass(type: TrackType): string {
   return map[type]
 }
 
+const latestMaintenance = computed(() => {
+  if (!maintenanceRecords.value.length) return null
+  return maintenanceRecords.value[0]
+})
+
 const infoRows = computed(() => {
   if (!tool.value) return []
-  return [
+  const rows = [
     { label: '名称', value: tool.value.name },
     { label: '型号', value: tool.value.model || '-' },
     { label: '品牌', value: tool.value.brand || '-' },
@@ -229,8 +241,18 @@ const infoRows = computed(() => {
     { label: '位置', value: tool.value.location },
     { label: '购入日期', value: tool.value.purchaseDate || '-' },
     { label: '价格', value: tool.value.price ? `¥${tool.value.price}` : '-' },
-    { label: '保养周期', value: tool.value.maintenanceCycleDays ? `${tool.value.maintenanceCycleDays}天` : '-' }
+    { label: '保养周期', value: tool.value.maintenanceCycleDays ? `${tool.value.maintenanceCycleDays}天` : '-' },
+    { label: '上次保养', value: tool.value.lastMaintenanceDate || '-' },
+    { label: '下次保养', value: tool.value.nextMaintenanceDate || '-' }
   ]
+  if (latestMaintenance.value) {
+    const m = latestMaintenance.value
+    rows.push({
+      label: '最近保养费用',
+      value: `¥${m.cost || 0}（人工 ¥${m.laborCost || 0} + 配件 ¥${m.partsCost || 0} + 其他 ¥${m.otherCost || 0}）`
+    })
+  }
+  return rows
 })
 
 onMounted(async () => {
