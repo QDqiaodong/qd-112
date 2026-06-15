@@ -26,13 +26,14 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { Wrench, Hammer, Clock, Shield, ClipboardList, FolderTree } from 'lucide-vue-next'
+import { Wrench, Hammer, Clock, Shield, ClipboardList, FolderTree, LayoutGrid } from 'lucide-vue-next'
 
 const route = useRoute()
 
 const navItems = [
   { path: '/', label: '首页', icon: Wrench },
   { path: '/tools', label: '工具管理', icon: Hammer },
+  { path: '/location-matrix', label: '位置矩阵', icon: LayoutGrid },
   { path: '/usage', label: '使用记录', icon: Clock },
   { path: '/maintenance', label: '保养管理', icon: Shield },
   { path: '/inventory', label: '盘点管理', icon: ClipboardList },
