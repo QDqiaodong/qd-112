@@ -2,6 +2,7 @@ package com.home.tools.controller;
 
 import com.home.tools.dto.ApiResponse;
 import com.home.tools.dto.PageResult;
+import com.home.tools.dto.ScenarioAnalysisDTO;
 import com.home.tools.dto.UsageRecordDTO;
 import com.home.tools.entity.UsageRecord;
 import com.home.tools.service.UsageRecordService;
@@ -29,6 +30,13 @@ public class UsageRecordController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ApiResponse.ok(usageRecordService.list(page, size, toolId, startDate, endDate));
+    }
+
+    @GetMapping("/scenario-analysis")
+    public ApiResponse<List<ScenarioAnalysisDTO>> getScenarioAnalysis(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ApiResponse.ok(usageRecordService.getScenarioAnalysis(startDate, endDate));
     }
 
     @GetMapping("/tool/{toolId}")

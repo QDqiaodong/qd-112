@@ -39,6 +39,11 @@ const router = createRouter({
           component: () => import('@/pages/Usage/index.vue')
         },
         {
+          path: 'scenario-analysis',
+          name: 'ScenarioAnalysis',
+          component: () => import('@/pages/ScenarioAnalysis/index.vue')
+        },
+        {
           path: 'maintenance',
           name: 'MaintenanceList',
           component: () => import('@/pages/Maintenance/index.vue')

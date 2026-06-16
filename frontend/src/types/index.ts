@@ -179,3 +179,19 @@ export interface StatsOverview {
   recentActivities?: { id: number; type: string; content: string; time: string }[]
   dueMaintenanceTools?: { id: number; name: string; nextMaintenanceDate: string }[]
 }
+
+export interface ScenarioTool {
+  toolId: number
+  toolName: string
+  totalMinutes: number
+  usageCount: number
+  lastUseDate: string
+}
+
+export interface ScenarioAnalysis {
+  scenario: string
+  totalMinutes: number
+  usageCount: number
+  lastUseDate: string
+  topTools: ScenarioTool[]
+}

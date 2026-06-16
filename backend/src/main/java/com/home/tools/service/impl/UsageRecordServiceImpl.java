@@ -1,6 +1,8 @@
 package com.home.tools.service.impl;
 
 import com.home.tools.dto.PageResult;
+import com.home.tools.dto.ScenarioAnalysisDTO;
+import com.home.tools.dto.ScenarioToolDTO;
 import com.home.tools.dto.UsageRecordDTO;
 import com.home.tools.entity.UsageRecord;
 import com.home.tools.repository.ToolRepository;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -71,6 +74,37 @@ public class UsageRecordServiceImpl implements UsageRecordService {
     @Override
     public void delete(Long id) {
         usageRecordRepository.deleteById(id);
+    }
+
+    @Override
+    public List<ScenarioAnalysisDTO> getScenarioAnalysis(LocalDate startDate, LocalDate endDate) {
+        List<Object[]> scenarioStats = usageRecordRepository.findScenarioStats(startDate, endDate);
+        List<ScenarioAnalysisDTO> result = new ArrayList<>();
+
+        for (Object[] stat : scenarioStats) {
+            ScenarioAnalysisDTO dto = new ScenarioAnalysisDTO();
+            dto.setScenario((String) stat[0]);
+            dto.setTotalMinutes(((Number) stat[1]).intValue());
+            dto.setUsageCount(((Number) stat[2]).intValue());
+            dto.setLastUseDate(stat[3] != null ? stat[3].toString() : null);
+
+            List<Object[]> toolStats = usageRecordRepository.findToolStatsByScenario(
+                    dto.getScenario(), startDate, endDate);
+            List<ScenarioToolDTO> topTools = new ArrayList<>();
+            for (Object[] toolStat : toolStats) {
+                ScenarioToolDTO toolDTO = new ScenarioToolDTO();
+                toolDTO.setToolId(((Number) toolStat[0]).longValue());
+                toolDTO.setToolName((String) toolStat[1]);
+                toolDTO.setTotalMinutes(((Number) toolStat[2]).intValue());
+                toolDTO.setUsageCount(((Number) toolStat[3]).intValue());
+                toolDTO.setLastUseDate(toolStat[4] != null ? toolStat[4].toString() : null);
+                topTools.add(toolDTO);
+            }
+            dto.setTopTools(topTools);
+            result.add(dto);
+        }
+
+        return result;
     }
 
     private void copyDtoToEntity(UsageRecordDTO dto, UsageRecord record) {
