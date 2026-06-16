@@ -102,6 +102,13 @@ CREATE TABLE IF NOT EXISTS inventory_item (
     actual_status VARCHAR(20),
     checked TINYINT DEFAULT 0,
     remarks TEXT,
+    tool_name VARCHAR(200),
+    tool_model VARCHAR(100),
+    tool_brand VARCHAR(100),
+    category_id BIGINT,
+    category_name VARCHAR(100),
+    location VARCHAR(200),
+    snapshot_status VARCHAR(20),
     INDEX idx_inventory_id (inventory_id),
     INDEX idx_tool_id (tool_id),
     UNIQUE KEY uk_inventory_tool (inventory_id, tool_id)

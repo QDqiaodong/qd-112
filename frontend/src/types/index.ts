@@ -113,6 +113,13 @@ export interface InventoryItem {
   actualStatus: string
   checked: boolean
   remarks: string
+  toolName: string
+  toolModel: string
+  toolBrand: string
+  categoryId: number
+  categoryName: string
+  location: string
+  snapshotStatus: string
 }
 
 export interface InventoryItemDTO {
@@ -120,6 +127,26 @@ export interface InventoryItemDTO {
   actualStatus?: string
   checked?: boolean
   remarks?: string
+}
+
+export interface DifferenceItem {
+  toolId: number
+  toolName: string
+  toolModel: string
+  toolBrand: string
+  expectedStatus: string
+  actualStatus: string
+  checked: boolean
+  categoryName: string
+  location: string
+  differenceType: string
+  remarks: string
+}
+
+export interface DifferenceGroup {
+  groupKey: string
+  groupType: string
+  items: DifferenceItem[]
 }
 
 export interface Category {

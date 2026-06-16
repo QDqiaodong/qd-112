@@ -1,5 +1,6 @@
 package com.home.tools.service;
 
+import com.home.tools.dto.DifferenceGroupDTO;
 import com.home.tools.dto.InventoryDTO;
 import com.home.tools.dto.InventoryItemDTO;
 import com.home.tools.dto.PageResult;
@@ -18,4 +19,6 @@ public interface InventoryService {
     Inventory updateInventory(Long id, InventoryDTO dto);
 
     InventoryItem updateItem(Long inventoryId, InventoryItemDTO dto);
+
+    List<DifferenceGroupDTO> getDifferenceGroups(Long inventoryId, String groupBy);
 }

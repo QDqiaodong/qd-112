@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Inventory, InventoryItem } from '@/types'
+import type { Inventory, InventoryItem, DifferenceGroup } from '@/types'
 import * as inventoryApi from '@/api/inventory'
 
 export const useInventoryStore = defineStore('inventory', () => {
   const inventories = ref<Inventory[]>([])
   const currentInventory = ref<Inventory | null>(null)
   const inventoryItems = ref<InventoryItem[]>([])
+  const differenceGroups = ref<DifferenceGroup[]>([])
   const loading = ref(false)
 
   async function fetchInventories(params?: Record<string, any>) {
@@ -39,6 +40,16 @@ export const useInventoryStore = defineStore('inventory', () => {
     }
   }
 
+  async function fetchDifferenceGroups(inventoryId: number, groupBy: string = 'category') {
+    loading.value = true
+    try {
+      const res = await inventoryApi.getInventoryDifferences(inventoryId, groupBy)
+      differenceGroups.value = res.data
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function createInventory() {
     const res = await inventoryApi.createInventory()
     return res.data
@@ -49,5 +60,5 @@ export const useInventoryStore = defineStore('inventory', () => {
     return res.data
   }
 
-  return { inventories, currentInventory, inventoryItems, loading, fetchInventories, fetchInventory, fetchInventoryItems, createInventory, updateItem }
+  return { inventories, currentInventory, inventoryItems, differenceGroups, loading, fetchInventories, fetchInventory, fetchInventoryItems, fetchDifferenceGroups, createInventory, updateItem }
 })

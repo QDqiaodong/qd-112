@@ -35,8 +35,9 @@
     <div v-else>
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-          <el-button @click="currentInventory = null">返回列表</el-button>
+          <el-button @click="handleBack">返回列表</el-button>
           <h3 class="text-lg font-semibold text-gray-800">盘点 #{{ currentInventory.id }}</h3>
+          <span class="text-xs text-gray-400">{{ currentInventory.inventoryDate }} · 快照已冻结</span>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-sm text-gray-500">
@@ -50,11 +51,45 @@
         </div>
       </div>
 
+      <DifferencePanel :inventory-id="currentInventory.id" class="mb-6" />
+
       <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <h4 class="font-semibold text-gray-700">盘点明细（快照）</h4>
+          <div class="flex items-center gap-2 text-xs text-gray-400">
+            <Camera :size="14" />
+            <span>盘点创建时已冻结工具快照信息</span>
+          </div>
+        </div>
         <el-table :data="inventoryStore.inventoryItems" stripe>
-          <el-table-column prop="toolId" label="工具ID" width="100" />
-          <el-table-column prop="expectedStatus" label="预期状态" width="100">
-            <template #default="{ row }">{{ statusLabel(row.expectedStatus) }}</template>
+          <el-table-column prop="toolId" label="工具ID" width="80" />
+          <el-table-column label="工具名称" min-width="140">
+            <template #default="{ row }">
+              <div>
+                <span class="font-medium">{{ row.toolName || `工具#${row.toolId}` }}</span>
+                <span v-if="row.toolModel" class="text-xs text-gray-400 ml-1">{{ row.toolModel }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="分类" width="100">
+            <template #default="{ row }">
+              <span class="text-xs text-gray-500">{{ row.categoryName || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="位置" width="120">
+            <template #default="{ row }">
+              <span class="text-xs text-gray-500">{{ row.location || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="快照状态" width="90" align="center">
+            <template #default="{ row }">
+              <StatusBadge :status="row.snapshotStatus || row.expectedStatus" />
+            </template>
+          </el-table-column>
+          <el-table-column label="预期状态" width="90" align="center">
+            <template #default="{ row }">
+              <StatusBadge :status="row.expectedStatus" />
+            </template>
           </el-table-column>
           <el-table-column label="实际状态" width="200">
             <template #default="{ row }">
@@ -97,8 +132,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from 'lucide-vue-next'
+import { Plus, Camera } from 'lucide-vue-next'
 import { useInventoryStore } from '@/stores/inventory'
+import StatusBadge from '@/components/StatusBadge.vue'
+import DifferencePanel from '@/components/DifferencePanel.vue'
 import type { Inventory, InventoryItem, ToolStatus } from '@/types'
 
 const inventoryStore = useInventoryStore()
@@ -109,26 +146,18 @@ const progressPercent = computed(() => {
   return Math.round((currentInventory.value.checkedTools / currentInventory.value.totalTools) * 100)
 })
 
-const statusLabels: Record<string, string> = {
-  AVAILABLE: '在位',
-  IN_USE: '使用中',
-  MAINTENANCE: '维修',
-  LOANED: '借用',
-  LOST: '丢失'
-}
-
-function statusLabel(status: string): string {
-  return statusLabels[status] || status
-}
-
 onMounted(() => inventoryStore.fetchInventories())
 
 async function handleCreate() {
-  await ElMessageBox.confirm('确定新建盘点？将自动生成所有工具的盘点清单。', '提示', { type: 'info' })
+  await ElMessageBox.confirm('确定新建盘点？将自动生成所有工具的盘点清单并冻结快照。', '提示', { type: 'info' })
   const inv = await inventoryStore.createInventory()
-  ElMessage.success('盘点创建成功')
+  ElMessage.success('盘点创建成功，工具快照已冻结')
   await inventoryStore.fetchInventories()
   if (inv) handleSelect(inv.id)
+}
+
+function handleBack() {
+  currentInventory.value = null
 }
 
 async function handleSelect(id: number) {

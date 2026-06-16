@@ -1,12 +1,16 @@
 package com.home.tools.service.impl;
 
+import com.home.tools.dto.DifferenceGroupDTO;
+import com.home.tools.dto.DifferenceItemDTO;
 import com.home.tools.dto.InventoryDTO;
 import com.home.tools.dto.InventoryItemDTO;
 import com.home.tools.dto.PageResult;
+import com.home.tools.entity.Category;
 import com.home.tools.entity.Inventory;
 import com.home.tools.entity.InventoryItem;
 import com.home.tools.entity.Tool;
 import com.home.tools.entity.ToolStatus;
+import com.home.tools.repository.CategoryRepository;
 import com.home.tools.repository.InventoryItemRepository;
 import com.home.tools.repository.InventoryRepository;
 import com.home.tools.repository.ToolRepository;
@@ -17,9 +21,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
@@ -27,13 +34,16 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final InventoryItemRepository inventoryItemRepository;
     private final ToolRepository toolRepository;
+    private final CategoryRepository categoryRepository;
 
     public InventoryServiceImpl(InventoryRepository inventoryRepository,
                                 InventoryItemRepository inventoryItemRepository,
-                                ToolRepository toolRepository) {
+                                ToolRepository toolRepository,
+                                CategoryRepository categoryRepository) {
         this.inventoryRepository = inventoryRepository;
         this.inventoryItemRepository = inventoryItemRepository;
         this.toolRepository = toolRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
@@ -74,6 +84,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         Inventory saved = inventoryRepository.save(inventory);
 
+        Map<Long, String> categoryNames = new HashMap<>();
+        for (Category cat : categoryRepository.findAll()) {
+            categoryNames.put(cat.getId(), cat.getName());
+        }
+
         for (Tool tool : allTools) {
             InventoryItem item = new InventoryItem();
             item.setInventoryId(saved.getId());
@@ -82,6 +97,13 @@ public class InventoryServiceImpl implements InventoryService {
             item.setActualStatus(tool.getStatus().name());
             item.setChecked(false);
             item.setRemarks("");
+            item.setToolName(tool.getName());
+            item.setToolModel(tool.getModel());
+            item.setToolBrand(tool.getBrand());
+            item.setCategoryId(tool.getCategoryId());
+            item.setCategoryName(categoryNames.getOrDefault(tool.getCategoryId(), "未分类"));
+            item.setLocation(tool.getLocation() != null ? tool.getLocation() : "");
+            item.setSnapshotStatus(tool.getStatus().name());
             inventoryItemRepository.save(item);
         }
 
@@ -119,5 +141,74 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         return saved;
+    }
+
+    @Override
+    public List<DifferenceGroupDTO> getDifferenceGroups(Long inventoryId, String groupBy) {
+        List<InventoryItem> allItems = inventoryItemRepository.findByInventoryId(inventoryId);
+
+        List<InventoryItem> differenceItems = allItems.stream()
+                .filter(item -> {
+                    boolean statusMismatch = !item.getExpectedStatus().equals(item.getActualStatus());
+                    boolean unchecked = !item.getChecked();
+                    boolean lost = "LOST".equals(item.getActualStatus());
+                    boolean maintenance = "MAINTENANCE".equals(item.getActualStatus());
+                    return statusMismatch || unchecked || lost || maintenance;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, List<InventoryItem>> grouped;
+        if ("location".equals(groupBy)) {
+            grouped = differenceItems.stream()
+                    .collect(Collectors.groupingBy(
+                            item -> item.getLocation() != null && !item.getLocation().isEmpty()
+                                    ? item.getLocation() : "未指定位置",
+                            LinkedHashMap::new, Collectors.toList()));
+        } else {
+            grouped = differenceItems.stream()
+                    .collect(Collectors.groupingBy(
+                            item -> item.getCategoryName() != null ? item.getCategoryName() : "未分类",
+                            LinkedHashMap::new, Collectors.toList()));
+        }
+
+        List<DifferenceGroupDTO> result = new ArrayList<>();
+        for (Map.Entry<String, List<InventoryItem>> entry : grouped.entrySet()) {
+            DifferenceGroupDTO group = new DifferenceGroupDTO();
+            group.setGroupKey(entry.getKey());
+            group.setGroupType(groupBy);
+            List<DifferenceItemDTO> diffItems = entry.getValue().stream().map(item -> {
+                DifferenceItemDTO diff = new DifferenceItemDTO();
+                diff.setToolId(item.getToolId());
+                diff.setToolName(item.getToolName());
+                diff.setToolModel(item.getToolModel());
+                diff.setToolBrand(item.getToolBrand());
+                diff.setExpectedStatus(item.getExpectedStatus());
+                diff.setActualStatus(item.getActualStatus());
+                diff.setChecked(item.getChecked());
+                diff.setCategoryName(item.getCategoryName());
+                diff.setLocation(item.getLocation());
+                diff.setRemarks(item.getRemarks());
+
+                List<String> types = new ArrayList<>();
+                if (!item.getExpectedStatus().equals(item.getActualStatus())) {
+                    types.add("STATUS_MISMATCH");
+                }
+                if (!item.getChecked()) {
+                    types.add("UNCHECKED");
+                }
+                if ("LOST".equals(item.getActualStatus())) {
+                    types.add("LOST");
+                }
+                if ("MAINTENANCE".equals(item.getActualStatus())) {
+                    types.add("MAINTENANCE");
+                }
+                diff.setDifferenceType(String.join(",", types));
+                return diff;
+            }).collect(Collectors.toList());
+            group.setItems(diffItems);
+            result.add(group);
+        }
+
+        return result;
     }
 }

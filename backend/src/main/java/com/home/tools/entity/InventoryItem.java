@@ -26,6 +26,20 @@ public class InventoryItem {
 
     private String remarks;
 
+    private String toolName;
+
+    private String toolModel;
+
+    private String toolBrand;
+
+    private Long categoryId;
+
+    private String categoryName;
+
+    private String location;
+
+    private String snapshotStatus;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getInventoryId() { return inventoryId; }
@@ -40,4 +54,18 @@ public class InventoryItem {
     public void setChecked(Boolean checked) { this.checked = checked; }
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
+    public String getToolName() { return toolName; }
+    public void setToolName(String toolName) { this.toolName = toolName; }
+    public String getToolModel() { return toolModel; }
+    public void setToolModel(String toolModel) { this.toolModel = toolModel; }
+    public String getToolBrand() { return toolBrand; }
+    public void setToolBrand(String toolBrand) { this.toolBrand = toolBrand; }
+    public Long getCategoryId() { return categoryId; }
+    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+    public String getSnapshotStatus() { return snapshotStatus; }
+    public void setSnapshotStatus(String snapshotStatus) { this.snapshotStatus = snapshotStatus; }
 }

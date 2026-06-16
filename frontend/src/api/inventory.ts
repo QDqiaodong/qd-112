@@ -1,5 +1,5 @@
 import request from './request'
-import type { Inventory, InventoryItem, ApiResponse } from '@/types'
+import type { Inventory, InventoryItem, DifferenceGroup, ApiResponse } from '@/types'
 
 export function getInventories(params?: Record<string, any>): Promise<ApiResponse<Inventory[]>> {
   return request.get('/inventories', { params })
@@ -23,4 +23,8 @@ export function updateInventory(id: number, data: Partial<Inventory>): Promise<A
 
 export function updateInventoryItem(inventoryId: number, itemId: number, data: Partial<InventoryItem>): Promise<ApiResponse<InventoryItem>> {
   return request.put(`/inventories/${inventoryId}/items/${itemId}`, data)
+}
+
+export function getInventoryDifferences(inventoryId: number, groupBy: string = 'category'): Promise<ApiResponse<DifferenceGroup[]>> {
+  return request.get(`/inventories/${inventoryId}/differences`, { params: { groupBy } })
 }
