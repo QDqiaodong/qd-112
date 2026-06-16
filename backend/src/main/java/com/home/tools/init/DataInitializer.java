@@ -48,36 +48,38 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initCategories() {
-        List<Category> categories = new ArrayList<>();
+        Category handTools = createCategory("手动工具", "hand_tools", null, 1, 1, "各类手动操作工具");
+        Category powerTools = createCategory("电动工具", "power_tools", null, 1, 2, "各类电力驱动工具");
+        Category measuringTools = createCategory("测量工具", "measuring_tools", null, 1, 3, "各类测量和检测工具");
+        Category safetyTools = createCategory("安全防护", "safety_tools", null, 1, 4, "各类安全防护用品");
+        Category gardenTools = createCategory("园艺工具", "garden_tools", null, 1, 5, "各类园艺作业工具");
 
-        categories.add(createCategory("手动工具", "hand_tools", null, 1, 1, "各类手动操作工具"));
-        categories.add(createCategory("扳手", "wrench", 1L, 2, 1, null));
-        categories.add(createCategory("螺丝刀", "screwdriver", 1L, 2, 2, null));
-        categories.add(createCategory("锤子", "hammer", 1L, 2, 3, null));
-        categories.add(createCategory("钳子", "pliers", 1L, 2, 4, null));
+        categoryRepository.saveAll(List.of(handTools, powerTools, measuringTools, safetyTools, gardenTools));
 
-        categories.add(createCategory("电动工具", "power_tools", null, 1, 2, "各类电力驱动工具"));
-        categories.add(createCategory("电钻", "drill", 5L, 2, 1, null));
-        categories.add(createCategory("电锯", "saw", 5L, 2, 2, null));
-        categories.add(createCategory("角磨机", "grinder", 5L, 2, 3, null));
-        categories.add(createCategory("热风枪", "heat_gun", 5L, 2, 4, null));
+        List<Category> children = new ArrayList<>();
+        children.add(createCategory("扳手", "wrench", handTools.getId(), 2, 1, null));
+        children.add(createCategory("螺丝刀", "screwdriver", handTools.getId(), 2, 2, null));
+        children.add(createCategory("锤子", "hammer", handTools.getId(), 2, 3, null));
+        children.add(createCategory("钳子", "pliers", handTools.getId(), 2, 4, null));
 
-        categories.add(createCategory("测量工具", "measuring_tools", null, 1, 3, "各类测量和检测工具"));
-        categories.add(createCategory("卷尺", "tape_measure", 9L, 2, 1, null));
-        categories.add(createCategory("水平仪", "level", 9L, 2, 2, null));
-        categories.add(createCategory("万用表", "multimeter", 9L, 2, 3, null));
+        children.add(createCategory("电钻", "drill", powerTools.getId(), 2, 1, null));
+        children.add(createCategory("电锯", "saw", powerTools.getId(), 2, 2, null));
+        children.add(createCategory("角磨机", "grinder", powerTools.getId(), 2, 3, null));
+        children.add(createCategory("热风枪", "heat_gun", powerTools.getId(), 2, 4, null));
 
-        categories.add(createCategory("安全防护", "safety_tools", null, 1, 4, "各类安全防护用品"));
-        categories.add(createCategory("护目镜", "goggles", 13L, 2, 1, null));
-        categories.add(createCategory("手套", "gloves", 13L, 2, 2, null));
-        categories.add(createCategory("口罩", "mask", 13L, 2, 3, null));
+        children.add(createCategory("卷尺", "tape_measure", measuringTools.getId(), 2, 1, null));
+        children.add(createCategory("水平仪", "level", measuringTools.getId(), 2, 2, null));
+        children.add(createCategory("万用表", "multimeter", measuringTools.getId(), 2, 3, null));
 
-        categories.add(createCategory("园艺工具", "garden_tools", null, 1, 5, "各类园艺作业工具"));
-        categories.add(createCategory("修枝剪", "pruner", 17L, 2, 1, null));
-        categories.add(createCategory("铲子", "shovel", 17L, 2, 2, null));
-        categories.add(createCategory("浇水壶", "watering_can", 17L, 2, 3, null));
+        children.add(createCategory("护目镜", "goggles", safetyTools.getId(), 2, 1, null));
+        children.add(createCategory("手套", "gloves", safetyTools.getId(), 2, 2, null));
+        children.add(createCategory("口罩", "mask", safetyTools.getId(), 2, 3, null));
 
-        categoryRepository.saveAll(categories);
+        children.add(createCategory("修枝剪", "pruner", gardenTools.getId(), 2, 1, null));
+        children.add(createCategory("铲子", "shovel", gardenTools.getId(), 2, 2, null));
+        children.add(createCategory("浇水壶", "watering_can", gardenTools.getId(), 2, 3, null));
+
+        categoryRepository.saveAll(children);
     }
 
     private void initMaintenanceItems() {
