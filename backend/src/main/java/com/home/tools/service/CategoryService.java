@@ -1,5 +1,6 @@
 package com.home.tools.service;
 
+import com.home.tools.dto.CategoryDeletionCheck;
 import com.home.tools.entity.Category;
 import com.home.tools.entity.MaintenanceItem;
 import java.util.List;
@@ -10,4 +11,8 @@ public interface CategoryService {
     List<Map<String, Object>> getCategoryTree();
 
     List<MaintenanceItem> listMaintenanceItems();
+
+    CategoryDeletionCheck checkDeletion(Long id);
+
+    void delete(Long id);
 }

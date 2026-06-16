@@ -133,6 +133,14 @@ export interface Category {
   children: Category[]
 }
 
+export interface CategoryDeletionCheck {
+  canDelete: boolean
+  toolCount: number
+  subCategoryCount: number
+  maintenanceRecordCount: number
+  message: string
+}
+
 export interface MaintenanceItem {
   id: number
   name: string

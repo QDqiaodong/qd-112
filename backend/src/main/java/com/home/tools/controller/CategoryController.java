@@ -1,6 +1,7 @@
 package com.home.tools.controller;
 
 import com.home.tools.dto.ApiResponse;
+import com.home.tools.dto.CategoryDeletionCheck;
 import com.home.tools.entity.MaintenanceItem;
 import com.home.tools.service.CategoryService;
 import com.home.tools.service.CacheService;
@@ -64,5 +65,20 @@ public class CategoryController {
         }
 
         return ApiResponse.ok(stats);
+    }
+
+    @GetMapping("/categories/{id}/deletion-check")
+    public ApiResponse<CategoryDeletionCheck> checkDeletion(@PathVariable Long id) {
+        return ApiResponse.ok(categoryService.checkDeletion(id));
+    }
+
+    @DeleteMapping("/categories/{id}")
+    public ApiResponse<Void> deleteCategory(@PathVariable Long id) {
+        try {
+            categoryService.delete(id);
+            return ApiResponse.ok(null);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
     }
 }

@@ -21,4 +21,8 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     List<Tool> findByNextMaintenanceDateBetween(LocalDate startDate, LocalDate endDate);
 
     Page<Tool> findByNameContainingOrModelContainingOrBrandContaining(String name, String model, String brand, Pageable pageable);
+
+    long countByCategoryId(Long categoryId);
+
+    long countBySubCategoryId(Long subCategoryId);
 }

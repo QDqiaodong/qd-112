@@ -1,30 +1,42 @@
 package com.home.tools.service.impl;
 
+import com.home.tools.dto.CategoryDeletionCheck;
 import com.home.tools.entity.Category;
 import com.home.tools.entity.MaintenanceItem;
+import com.home.tools.entity.Tool;
 import com.home.tools.repository.CategoryRepository;
 import com.home.tools.repository.MaintenanceItemRepository;
+import com.home.tools.repository.MaintenanceRecordRepository;
+import com.home.tools.repository.ToolRepository;
 import com.home.tools.service.CacheService;
 import com.home.tools.service.CategoryService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final MaintenanceItemRepository maintenanceItemRepository;
+    private final ToolRepository toolRepository;
+    private final MaintenanceRecordRepository maintenanceRecordRepository;
     private final CacheService cacheService;
 
     public CategoryServiceImpl(CategoryRepository categoryRepository,
                                MaintenanceItemRepository maintenanceItemRepository,
+                               ToolRepository toolRepository,
+                               MaintenanceRecordRepository maintenanceRecordRepository,
                                CacheService cacheService) {
         this.categoryRepository = categoryRepository;
         this.maintenanceItemRepository = maintenanceItemRepository;
+        this.toolRepository = toolRepository;
+        this.maintenanceRecordRepository = maintenanceRecordRepository;
         this.cacheService = cacheService;
     }
 
@@ -64,5 +76,56 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
         return tree;
+    }
+
+    @Override
+    public CategoryDeletionCheck checkDeletion(Long id) {
+        CategoryDeletionCheck check = new CategoryDeletionCheck();
+
+        long subCategoryCount = categoryRepository.countByParentId(id);
+        long toolCount = toolRepository.countByCategoryId(id) + toolRepository.countBySubCategoryId(id);
+
+        List<Tool> tools = toolRepository.findByCategoryId(id);
+        List<Long> toolIds = tools.stream().map(Tool::getId).collect(Collectors.toList());
+        long maintenanceRecordCount = toolIds.isEmpty() ? 0 : maintenanceRecordRepository.countByToolIdIn(toolIds);
+
+        check.setSubCategoryCount(subCategoryCount);
+        check.setToolCount(toolCount);
+        check.setMaintenanceRecordCount(maintenanceRecordCount);
+
+        boolean canDelete = (subCategoryCount == 0 && toolCount == 0 && maintenanceRecordCount == 0);
+        check.setCanDelete(canDelete);
+
+        if (!canDelete) {
+            StringBuilder msg = new StringBuilder("该分类下存在关联数据，无法删除：");
+            List<String> parts = new ArrayList<>();
+            if (subCategoryCount > 0) {
+                parts.add(subCategoryCount + " 个子分类");
+            }
+            if (toolCount > 0) {
+                parts.add(toolCount + " 个工具");
+            }
+            if (maintenanceRecordCount > 0) {
+                parts.add(maintenanceRecordCount + " 条保养记录");
+            }
+            msg.append(String.join("、", parts));
+            check.setMessage(msg.toString());
+        } else {
+            check.setMessage("该分类可以安全删除");
+        }
+
+        return check;
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        CategoryDeletionCheck check = checkDeletion(id);
+        if (!check.isCanDelete()) {
+            throw new RuntimeException(check.getMessage());
+        }
+        categoryRepository.deleteById(id);
+        cacheService.evictCategoryCache();
+        cacheService.cacheCategoryTree(categoryRepository.findAll());
     }
 }
