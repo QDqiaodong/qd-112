@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Tool } from '@/types'
+import type { Tool, ToolWithScore, ToolAvailabilityScore } from '@/types'
 import * as toolApi from '@/api/tool'
 
 export const useToolStore = defineStore('tool', () => {
   const tools = ref<Tool[]>([])
+  const toolsWithScore = ref<ToolWithScore[]>([])
   const currentTool = ref<Tool | null>(null)
+  const currentAvailabilityScore = ref<ToolAvailabilityScore | null>(null)
   const monthlyMaintenanceTools = ref<Tool[]>([])
   const total = ref(0)
   const loading = ref(false)
@@ -21,6 +23,17 @@ export const useToolStore = defineStore('tool', () => {
     }
   }
 
+  async function fetchToolsWithScore(params?: Record<string, any>) {
+    loading.value = true
+    try {
+      const res = await toolApi.getToolsWithScore(params)
+      toolsWithScore.value = res.data.list
+      total.value = res.data.total
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchTool(id: number) {
     loading.value = true
     try {
@@ -29,6 +42,12 @@ export const useToolStore = defineStore('tool', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  async function fetchToolAvailabilityScore(id: number) {
+    const res = await toolApi.getToolAvailabilityScore(id)
+    currentAvailabilityScore.value = res.data
+    return res.data
   }
 
   async function createTool(data: Partial<Tool>) {
@@ -60,5 +79,22 @@ export const useToolStore = defineStore('tool', () => {
     }
   }
 
-  return { tools, currentTool, monthlyMaintenanceTools, total, loading, fetchTools, fetchTool, createTool, updateTool, deleteTool, fetchToolOptions, fetchMonthlyMaintenance }
+  return {
+    tools,
+    toolsWithScore,
+    currentTool,
+    currentAvailabilityScore,
+    monthlyMaintenanceTools,
+    total,
+    loading,
+    fetchTools,
+    fetchToolsWithScore,
+    fetchTool,
+    fetchToolAvailabilityScore,
+    createTool,
+    updateTool,
+    deleteTool,
+    fetchToolOptions,
+    fetchMonthlyMaintenance
+  }
 })

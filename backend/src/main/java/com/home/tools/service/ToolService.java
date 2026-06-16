@@ -2,7 +2,9 @@ package com.home.tools.service;
 
 import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
+import com.home.tools.dto.ToolAvailabilityScore;
 import com.home.tools.dto.ToolDTO;
+import com.home.tools.dto.ToolWithScore;
 import com.home.tools.entity.Tool;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +12,8 @@ import java.util.Map;
 public interface ToolService {
 
     PageResult<Tool> list(Integer page, Integer size, String keyword, Long categoryId);
+
+    PageResult<ToolWithScore> listWithScore(Integer page, Integer size, String keyword, Long categoryId);
 
     Tool getById(Long id);
 
@@ -28,4 +32,8 @@ public interface ToolService {
     Map<String, Long> countByStatus();
 
     List<MaintenanceTrackDTO> getMaintenanceTrack(Long toolId);
+
+    ToolAvailabilityScore calculateAvailabilityScore(Long toolId);
+
+    ToolAvailabilityScore calculateAvailabilityScore(Tool tool);
 }

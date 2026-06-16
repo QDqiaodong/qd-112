@@ -195,3 +195,35 @@ export interface ScenarioAnalysis {
   lastUseDate: string
   topTools: ScenarioTool[]
 }
+
+export interface ToolAvailabilityScore {
+  toolId: number
+  totalScore: number
+  grade: 'A' | 'B' | 'C' | 'D' | 'E' | '-'
+
+  statusScore: number
+  statusDetail: string
+
+  maintenanceScore: number
+  maintenanceDetail: string
+  nextMaintenanceDate: string
+  overdueDays: number
+
+  usageScore: number
+  usageDetail: string
+  usageCount30Days: number
+  usageCount90Days: number
+  lastUseDate: string
+
+  inventoryScore: number
+  inventoryDetail: string
+  lastInventoryDate: string
+  lastInventoryChecked: boolean
+  lastInventoryActualStatus: string
+  lastInventoryExpectedStatus: string
+}
+
+export interface ToolWithScore {
+  tool: Tool
+  availabilityScore: ToolAvailabilityScore
+}

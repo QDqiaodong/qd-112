@@ -3,7 +3,9 @@ package com.home.tools.controller;
 import com.home.tools.dto.ApiResponse;
 import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
+import com.home.tools.dto.ToolAvailabilityScore;
 import com.home.tools.dto.ToolDTO;
+import com.home.tools.dto.ToolWithScore;
 import com.home.tools.entity.MaintenanceRecord;
 import com.home.tools.entity.Tool;
 import com.home.tools.entity.UsageRecord;
@@ -39,9 +41,23 @@ public class ToolController {
         return ApiResponse.ok(toolService.list(page, size, keyword, categoryId));
     }
 
+    @GetMapping("/with-score")
+    public ApiResponse<PageResult<ToolWithScore>> listWithScore(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId) {
+        return ApiResponse.ok(toolService.listWithScore(page, size, keyword, categoryId));
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<Tool> getById(@PathVariable Long id) {
         return ApiResponse.ok(toolService.getById(id));
+    }
+
+    @GetMapping("/{id}/availability-score")
+    public ApiResponse<ToolAvailabilityScore> getAvailabilityScore(@PathVariable Long id) {
+        return ApiResponse.ok(toolService.calculateAvailabilityScore(id));
     }
 
     @PostMapping

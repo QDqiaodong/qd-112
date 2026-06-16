@@ -43,4 +43,9 @@ public interface UsageRecordRepository extends JpaRepository<UsageRecord, Long> 
     List<Object[]> findToolStatsByScenario(@Param("scenario") String scenario,
                                            @Param("startDate") LocalDate startDate,
                                            @Param("endDate") LocalDate endDate);
+
+    Long countByToolIdAndUseDateBetween(Long toolId, LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT MAX(u.useDate) FROM UsageRecord u WHERE u.toolId = :toolId")
+    LocalDate findLastUseDateByToolId(@Param("toolId") Long toolId);
 }
