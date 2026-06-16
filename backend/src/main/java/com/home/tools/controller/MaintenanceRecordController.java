@@ -4,6 +4,7 @@ import com.home.tools.dto.ApiResponse;
 import com.home.tools.dto.MaintenanceRecordDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.entity.MaintenanceRecord;
+import com.home.tools.service.CacheService;
 import com.home.tools.service.MaintenanceRecordService;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +15,12 @@ import java.util.List;
 public class MaintenanceRecordController {
 
     private final MaintenanceRecordService maintenanceRecordService;
+    private final CacheService cacheService;
 
-    public MaintenanceRecordController(MaintenanceRecordService maintenanceRecordService) {
+    public MaintenanceRecordController(MaintenanceRecordService maintenanceRecordService,
+                                       CacheService cacheService) {
         this.maintenanceRecordService = maintenanceRecordService;
+        this.cacheService = cacheService;
     }
 
     @GetMapping
@@ -39,17 +43,22 @@ public class MaintenanceRecordController {
 
     @PostMapping
     public ApiResponse<MaintenanceRecord> create(@RequestBody MaintenanceRecordDTO dto) {
-        return ApiResponse.ok(maintenanceRecordService.create(dto));
+        MaintenanceRecord result = maintenanceRecordService.create(dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @PutMapping("/{id}")
     public ApiResponse<MaintenanceRecord> update(@PathVariable Long id, @RequestBody MaintenanceRecordDTO dto) {
-        return ApiResponse.ok(maintenanceRecordService.update(id, dto));
+        MaintenanceRecord result = maintenanceRecordService.update(id, dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         maintenanceRecordService.delete(id);
+        cacheService.evictStatsCache();
         return ApiResponse.ok(null);
     }
 }

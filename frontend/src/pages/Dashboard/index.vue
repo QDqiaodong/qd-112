@@ -101,11 +101,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import * as echarts from 'echarts'
 import { Hammer, Shield, Clock, CheckCircle } from 'lucide-vue-next'
 import { useDashboardStore } from '@/stores/dashboard'
 
 const dashboardStore = useDashboardStore()
+const route = useRoute()
 const overview = computed(() => dashboardStore.overview)
 const chartRef = ref<HTMLElement>()
 let chartInstance: echarts.ECharts | null = null
@@ -122,10 +124,20 @@ const inPlaceRate = computed(() => {
   return ((available / total) * 100).toFixed(1)
 })
 
-onMounted(async () => {
+async function loadOverview() {
   await dashboardStore.fetchOverview()
   await nextTick()
   initChart()
+}
+
+onMounted(() => {
+  loadOverview()
+})
+
+watch(() => route.path, (newPath) => {
+  if (newPath === '/') {
+    loadOverview()
+  }
 })
 
 watch(() => overview.value?.categoryStats, () => {

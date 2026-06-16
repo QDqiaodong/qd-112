@@ -8,6 +8,7 @@ import com.home.tools.dto.PageResult;
 import com.home.tools.entity.Inventory;
 import com.home.tools.entity.InventoryItem;
 import com.home.tools.repository.InventoryItemRepository;
+import com.home.tools.service.CacheService;
 import com.home.tools.service.InventoryService;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,10 +21,14 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
     private final InventoryItemRepository inventoryItemRepository;
+    private final CacheService cacheService;
 
-    public InventoryController(InventoryService inventoryService, InventoryItemRepository inventoryItemRepository) {
+    public InventoryController(InventoryService inventoryService,
+                               InventoryItemRepository inventoryItemRepository,
+                               CacheService cacheService) {
         this.inventoryService = inventoryService;
         this.inventoryItemRepository = inventoryItemRepository;
+        this.cacheService = cacheService;
     }
 
     @GetMapping
@@ -48,17 +53,23 @@ public class InventoryController {
         if (dto.getInventoryDate() == null) {
             dto.setInventoryDate(LocalDate.now());
         }
-        return ApiResponse.ok(inventoryService.createInventory(dto));
+        Inventory result = inventoryService.createInventory(dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @PutMapping("/{id}")
     public ApiResponse<Inventory> update(@PathVariable Long id, @RequestBody InventoryDTO dto) {
-        return ApiResponse.ok(inventoryService.updateInventory(id, dto));
+        Inventory result = inventoryService.updateInventory(id, dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @PostMapping("/{id}/item")
     public ApiResponse<InventoryItem> updateItem(@PathVariable Long id, @RequestBody InventoryItemDTO dto) {
-        return ApiResponse.ok(inventoryService.updateItem(id, dto));
+        InventoryItem result = inventoryService.updateItem(id, dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @GetMapping("/{id}/differences")

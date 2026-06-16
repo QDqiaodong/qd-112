@@ -5,6 +5,7 @@ import com.home.tools.dto.PageResult;
 import com.home.tools.dto.ScenarioAnalysisDTO;
 import com.home.tools.dto.UsageRecordDTO;
 import com.home.tools.entity.UsageRecord;
+import com.home.tools.service.CacheService;
 import com.home.tools.service.UsageRecordService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +18,11 @@ import java.util.List;
 public class UsageRecordController {
 
     private final UsageRecordService usageRecordService;
+    private final CacheService cacheService;
 
-    public UsageRecordController(UsageRecordService usageRecordService) {
+    public UsageRecordController(UsageRecordService usageRecordService, CacheService cacheService) {
         this.usageRecordService = usageRecordService;
+        this.cacheService = cacheService;
     }
 
     @GetMapping
@@ -46,17 +49,22 @@ public class UsageRecordController {
 
     @PostMapping
     public ApiResponse<UsageRecord> create(@RequestBody UsageRecordDTO dto) {
-        return ApiResponse.ok(usageRecordService.create(dto));
+        UsageRecord result = usageRecordService.create(dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @PutMapping("/{id}")
     public ApiResponse<UsageRecord> update(@PathVariable Long id, @RequestBody UsageRecordDTO dto) {
-        return ApiResponse.ok(usageRecordService.update(id, dto));
+        UsageRecord result = usageRecordService.update(id, dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         usageRecordService.delete(id);
+        cacheService.evictStatsCache();
         return ApiResponse.ok(null);
     }
 }

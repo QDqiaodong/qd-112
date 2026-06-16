@@ -9,6 +9,7 @@ import com.home.tools.dto.ToolWithScore;
 import com.home.tools.entity.MaintenanceRecord;
 import com.home.tools.entity.Tool;
 import com.home.tools.entity.UsageRecord;
+import com.home.tools.service.CacheService;
 import com.home.tools.service.MaintenanceRecordService;
 import com.home.tools.service.ToolService;
 import com.home.tools.service.UsageRecordService;
@@ -23,13 +24,16 @@ public class ToolController {
     private final ToolService toolService;
     private final MaintenanceRecordService maintenanceRecordService;
     private final UsageRecordService usageRecordService;
+    private final CacheService cacheService;
 
     public ToolController(ToolService toolService,
                           MaintenanceRecordService maintenanceRecordService,
-                          UsageRecordService usageRecordService) {
+                          UsageRecordService usageRecordService,
+                          CacheService cacheService) {
         this.toolService = toolService;
         this.maintenanceRecordService = maintenanceRecordService;
         this.usageRecordService = usageRecordService;
+        this.cacheService = cacheService;
     }
 
     @GetMapping
@@ -62,17 +66,22 @@ public class ToolController {
 
     @PostMapping
     public ApiResponse<Tool> create(@RequestBody ToolDTO dto) {
-        return ApiResponse.ok(toolService.create(dto));
+        Tool result = toolService.create(dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @PutMapping("/{id}")
     public ApiResponse<Tool> update(@PathVariable Long id, @RequestBody ToolDTO dto) {
-        return ApiResponse.ok(toolService.update(id, dto));
+        Tool result = toolService.update(id, dto);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         toolService.delete(id);
+        cacheService.evictStatsCache();
         return ApiResponse.ok(null);
     }
 
