@@ -304,23 +304,25 @@ const displayCabinets = computed(() => {
 
 const cabinetStats = computed(() => {
   const stats: Record<string, Record<string, number>> = {}
-  parsedTools.value.forEach(item => {
-    const cab = item.loc.cabinet
-    if (!stats[cab]) {
-      stats[cab] = { total: 0, AVAILABLE: 0, IN_USE: 0, MAINTENANCE: 0, LOANED: 0, LOST: 0 }
-    }
-    stats[cab].total++
-    if (stats[cab][item.tool.status] !== undefined) {
-      stats[cab][item.tool.status]++
-    }
-  })
+  parsedTools.value
+    .filter(item => !selectedRoom.value || item.loc.room === selectedRoom.value)
+    .forEach(item => {
+      const cab = item.loc.cabinet
+      if (!stats[cab]) {
+        stats[cab] = { total: 0, AVAILABLE: 0, IN_USE: 0, MAINTENANCE: 0, LOANED: 0, LOST: 0 }
+      }
+      stats[cab].total++
+      if (stats[cab][item.tool.status] !== undefined) {
+        stats[cab][item.tool.status]++
+      }
+    })
   return stats
 })
 
 function getShelves(cabinet: string): string[] {
   const shelves = new Set<string>()
   parsedTools.value
-    .filter(item => item.loc.cabinet === cabinet)
+    .filter(item => item.loc.room === selectedRoom.value && item.loc.cabinet === cabinet)
     .forEach(item => shelves.add(item.loc.shelf))
   const sorted = Array.from(shelves).sort((a, b) => {
     const na = parseInt(a) || 0
@@ -332,7 +334,7 @@ function getShelves(cabinet: string): string[] {
 
 function getCells(cabinet: string, shelf: string): string[] {
   const toolsInShelf = parsedTools.value
-    .filter(item => item.loc.cabinet === cabinet && item.loc.shelf === shelf)
+    .filter(item => item.loc.room === selectedRoom.value && item.loc.cabinet === cabinet && item.loc.shelf === shelf)
   
   const cellNums = toolsInShelf.map(item => parseInt(item.loc.cell) || 1)
   const maxCell = Math.max(6, ...cellNums)
@@ -345,7 +347,7 @@ function getCells(cabinet: string, shelf: string): string[] {
 
 function getToolInCell(cabinet: string, shelf: string, cell: string): Tool | null {
   const found = parsedTools.value.find(
-    item => item.loc.cabinet === cabinet && item.loc.shelf === shelf && item.loc.cell === cell
+    item => item.loc.room === selectedRoom.value && item.loc.cabinet === cabinet && item.loc.shelf === shelf && item.loc.cell === cell
   )
   return found ? found.tool : null
 }
