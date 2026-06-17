@@ -163,7 +163,7 @@ public class ToolServiceImpl implements ToolService {
 
     @Override
     public List<Tool> findDueMaintenance() {
-        return toolRepository.findByNextMaintenanceDateBeforeOrEqual(LocalDate.now());
+        return toolRepository.findByNextMaintenanceDateLessThanEqual(LocalDate.now());
     }
 
     @Override

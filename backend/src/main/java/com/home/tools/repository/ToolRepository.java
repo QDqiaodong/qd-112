@@ -18,7 +18,7 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
 
     List<Tool> findByNextMaintenanceDateBefore(LocalDate date);
 
-    List<Tool> findByNextMaintenanceDateBeforeOrEqual(LocalDate date);
+    List<Tool> findByNextMaintenanceDateLessThanEqual(LocalDate date);
 
     List<Tool> findByNextMaintenanceDateBetween(LocalDate startDate, LocalDate endDate);
 
