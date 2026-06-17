@@ -31,6 +31,8 @@ public interface ToolService {
 
     Map<String, Long> countByStatus();
 
+    Map<String, Long> countByLocation();
+
     List<MaintenanceTrackDTO> getMaintenanceTrack(Long toolId);
 
     ToolAvailabilityScore calculateAvailabilityScore(Long toolId);

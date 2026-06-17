@@ -155,6 +155,7 @@ import { getMaintenanceByTool } from '@/api/maintenance'
 import { getMaintenanceTrack } from '@/api/tool'
 import StatusBadge from '@/components/StatusBadge.vue'
 import type { UsageRecord, MaintenanceRecord, MaintenanceTrack, TrackType, ToolStatus } from '@/types'
+import { normalizeLocationForDisplay } from '@/utils/location'
 
 const route = useRoute()
 const router = useRouter()
@@ -238,7 +239,7 @@ const infoRows = computed(() => {
     { label: '型号', value: tool.value.model || '-' },
     { label: '品牌', value: tool.value.brand || '-' },
     { label: '分类ID', value: `${tool.value.categoryId} / ${tool.value.subCategoryId}` },
-    { label: '位置', value: tool.value.location },
+    { label: '位置', value: normalizeLocationForDisplay(tool.value.location) },
     { label: '购入日期', value: tool.value.purchaseDate || '-' },
     { label: '价格', value: tool.value.price ? `¥${tool.value.price}` : '-' },
     { label: '保养周期', value: tool.value.maintenanceCycleDays ? `${tool.value.maintenanceCycleDays}天` : '-' },

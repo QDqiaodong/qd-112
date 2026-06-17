@@ -11,6 +11,7 @@ import com.home.tools.repository.UsageRecordRepository;
 import com.home.tools.service.CategoryService;
 import com.home.tools.service.CacheService;
 import com.home.tools.service.ToolService;
+import com.home.tools.util.LocationUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 
@@ -84,6 +85,9 @@ public class CategoryController {
         List<Map<String, Object>> categoryStats = buildCategoryStats();
         stats.put("categoryStats", categoryStats);
 
+        List<Map<String, Object>> locationStats = buildLocationStats();
+        stats.put("locationStats", locationStats);
+
         List<Map<String, Object>> recentActivities = buildRecentActivities();
         stats.put("recentActivities", recentActivities);
 
@@ -111,6 +115,18 @@ public class CategoryController {
                         LinkedHashMap::new,
                         Collectors.counting()));
         return counts.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("name", e.getKey());
+                    m.put("value", e.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private List<Map<String, Object>> buildLocationStats() {
+        Map<String, Long> locationCounts = toolService.countByLocation();
+        return locationCounts.entrySet().stream()
                 .map(e -> {
                     Map<String, Object> m = new HashMap<>();
                     m.put("name", e.getKey());

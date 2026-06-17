@@ -194,7 +194,7 @@
           </div>
           <div>
             <p class="text-xs text-gray-500 mb-1">位置</p>
-            <p class="text-sm font-medium text-gray-800">{{ currentTool.location || '—' }}</p>
+            <p class="text-sm font-medium text-gray-800">{{ normalizeLocationForDisplay(currentTool.location) }}</p>
           </div>
           <div>
             <p class="text-xs text-gray-500 mb-1">购入日期</p>
@@ -255,6 +255,8 @@ import { LayoutGrid, MapPin, Box, Layers, Wrench, Loader2, CheckCircle, Clock, W
 import { useToolStore } from '@/stores/tool'
 import StatusBadge from '@/components/StatusBadge.vue'
 import type { Tool, ToolStatus } from '@/types'
+import { parseLocation as parseLocationUtil, normalizeLocation, normalizeLocationForDisplay } from '@/utils/location'
+import type { ParsedLocation } from '@/utils/location'
 
 const router = useRouter()
 const toolStore = useToolStore()
@@ -264,23 +266,8 @@ const selectedCabinet = ref<string>('')
 const summaryDialogVisible = ref(false)
 const currentTool = ref<Tool | null>(null)
 
-interface ParsedLocation {
-  room: string
-  cabinet: string
-  shelf: string
-  cell: string
-}
-
 function parseLocation(location: string): ParsedLocation | null {
-  if (!location) return null
-  const parts = location.split(/[-_/]/).map(p => p.trim()).filter(Boolean)
-  if (parts.length < 3) return null
-  return {
-    room: parts[0] || '未分类',
-    cabinet: parts[1] || 'A',
-    shelf: parts[2] || '1',
-    cell: parts[3] || '1'
-  }
+  return parseLocationUtil(normalizeLocation(location))
 }
 
 const allTools = computed(() => toolStore.tools)

@@ -85,7 +85,7 @@
         <div class="space-y-1 text-sm text-gray-500 mb-4">
           <p>型号：{{ item.tool.model || '-' }}</p>
           <p>品牌：{{ item.tool.brand || '-' }}</p>
-          <p>位置：{{ item.tool.location }}</p>
+          <p>位置：{{ normalizeLocationForDisplay(item.tool.location) }}</p>
           <p class="flex items-center gap-1">
             <component :is="getDimIcon(item.availabilityScore)" :size="12" />
             <span :class="getDimTextClass(item.availabilityScore)">
@@ -242,6 +242,7 @@ import CategoryCascade from '@/components/CategoryCascade.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { ToolWithScore, ToolAvailabilityScore } from '@/types'
+import { normalizeLocationForDisplay } from '@/utils/location'
 
 const router = useRouter()
 const toolStore = useToolStore()

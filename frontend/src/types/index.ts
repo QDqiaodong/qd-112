@@ -211,6 +211,7 @@ export interface StatsOverview {
   statusCounts: Record<ToolStatus, number>
   dueMaintenanceCount: number
   categoryStats?: { name: string; value: number }[]
+  locationStats?: { name: string; value: number }[]
   recentActivities?: { id: number; type: string; content: string; time: string }[]
   dueMaintenanceTools?: { id: number; name: string; nextMaintenanceDate: string }[]
 }

@@ -88,7 +88,7 @@
           </el-table-column>
           <el-table-column label="位置" width="120">
             <template #default="{ row }">
-              <span class="text-xs text-gray-500">{{ row.location || '-' }}</span>
+              <span class="text-xs text-gray-500">{{ normalizeLocationForDisplay(row.location) }}</span>
             </template>
           </el-table-column>
           <el-table-column label="核对" width="60" align="center">
@@ -110,6 +110,7 @@ import { ElIcon } from 'element-plus'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useInventoryStore } from '@/stores/inventory'
 import type { DifferenceGroup } from '@/types'
+import { normalizeLocationForDisplay } from '@/utils/location'
 
 const props = defineProps<{
   inventoryId: number

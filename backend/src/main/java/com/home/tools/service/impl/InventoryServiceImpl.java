@@ -15,6 +15,7 @@ import com.home.tools.repository.InventoryItemRepository;
 import com.home.tools.repository.InventoryRepository;
 import com.home.tools.repository.ToolRepository;
 import com.home.tools.service.InventoryService;
+import com.home.tools.util.LocationUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -102,7 +103,7 @@ public class InventoryServiceImpl implements InventoryService {
             item.setToolBrand(tool.getBrand());
             item.setCategoryId(tool.getCategoryId());
             item.setCategoryName(categoryNames.getOrDefault(tool.getCategoryId(), "未分类"));
-            item.setLocation(tool.getLocation() != null ? tool.getLocation() : "");
+            item.setLocation(LocationUtils.normalizeLocation(tool.getLocation()));
             item.setSnapshotStatus(tool.getStatus().name());
             inventoryItemRepository.save(item);
         }
@@ -161,8 +162,7 @@ public class InventoryServiceImpl implements InventoryService {
         if ("location".equals(groupBy)) {
             grouped = differenceItems.stream()
                     .collect(Collectors.groupingBy(
-                            item -> item.getLocation() != null && !item.getLocation().isEmpty()
-                                    ? item.getLocation() : "未指定位置",
+                            item -> LocationUtils.normalizeLocationForDisplay(item.getLocation()),
                             LinkedHashMap::new, Collectors.toList()));
         } else {
             grouped = differenceItems.stream()
@@ -186,7 +186,7 @@ public class InventoryServiceImpl implements InventoryService {
                 diff.setActualStatus(item.getActualStatus());
                 diff.setChecked(item.getChecked());
                 diff.setCategoryName(item.getCategoryName());
-                diff.setLocation(item.getLocation());
+                diff.setLocation(LocationUtils.normalizeLocationForDisplay(item.getLocation()));
                 diff.setRemarks(item.getRemarks());
 
                 List<String> types = new ArrayList<>();

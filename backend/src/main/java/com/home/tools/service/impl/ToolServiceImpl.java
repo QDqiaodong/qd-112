@@ -8,6 +8,7 @@ import com.home.tools.dto.ToolWithScore;
 import com.home.tools.entity.*;
 import com.home.tools.repository.*;
 import com.home.tools.service.ToolService;
+import com.home.tools.util.LocationUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -157,6 +158,17 @@ public class ToolServiceImpl implements ToolService {
         return counts;
     }
 
+    @Override
+    public Map<String, Long> countByLocation() {
+        List<Tool> allTools = toolRepository.findAll();
+        Map<String, Long> counts = allTools.stream()
+                .collect(Collectors.groupingBy(
+                        tool -> LocationUtils.normalizeLocationForDisplay(tool.getLocation()),
+                        LinkedHashMap::new,
+                        Collectors.counting()));
+        return counts;
+    }
+
     private void copyDtoToEntity(ToolDTO dto, Tool tool) {
         tool.setName(dto.getName());
         tool.setModel(dto.getModel());
@@ -165,7 +177,7 @@ public class ToolServiceImpl implements ToolService {
         tool.setSubCategoryId(dto.getSubCategoryId());
         tool.setPurpose(dto.getPurpose());
         tool.setSpecification(dto.getSpecification());
-        tool.setLocation(dto.getLocation());
+        tool.setLocation(LocationUtils.normalizeLocation(dto.getLocation()));
         tool.setPurchaseDate(dto.getPurchaseDate());
         tool.setPrice(dto.getPrice());
         tool.setLastMaintenanceDate(dto.getLastMaintenanceDate());
