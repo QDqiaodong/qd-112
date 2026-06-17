@@ -85,8 +85,12 @@ public class CategoryServiceImpl implements CategoryService {
         long subCategoryCount = categoryRepository.countByParentId(id);
         long toolCount = toolRepository.countByCategoryId(id) + toolRepository.countBySubCategoryId(id);
 
-        List<Tool> tools = toolRepository.findByCategoryId(id);
-        List<Long> toolIds = tools.stream().map(Tool::getId).collect(Collectors.toList());
+        List<Tool> toolsByCategory = toolRepository.findByCategoryId(id);
+        List<Tool> toolsBySubCategory = toolRepository.findBySubCategoryId(id);
+        List<Tool> allTools = new ArrayList<>();
+        allTools.addAll(toolsByCategory);
+        allTools.addAll(toolsBySubCategory);
+        List<Long> toolIds = allTools.stream().map(Tool::getId).collect(Collectors.toList());
         long maintenanceRecordCount = toolIds.isEmpty() ? 0 : maintenanceRecordRepository.countByToolIdIn(toolIds);
 
         check.setSubCategoryCount(subCategoryCount);

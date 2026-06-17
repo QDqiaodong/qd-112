@@ -91,17 +91,46 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
     public MaintenanceRecord update(Long id, MaintenanceRecordDTO dto) {
         MaintenanceRecord record = maintenanceRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MaintenanceRecord not found"));
-        Tool tool = toolRepository.findById(dto.getToolId())
+        Long oldToolId = record.getToolId();
+        Long newToolId = dto.getToolId();
+
+        Tool newTool = toolRepository.findById(newToolId)
                 .orElseThrow(() -> new RuntimeException("工具不存在，无法更新保养记录"));
         copyDtoToEntity(dto, record);
         calculateTotalCost(record);
-        resolveNextMaintenanceDate(record, tool);
+        resolveNextMaintenanceDate(record, newTool);
         MaintenanceRecord saved = maintenanceRecordRepository.save(record);
-        tool.setLastMaintenanceDate(record.getMaintenanceDate());
+
+        newTool.setLastMaintenanceDate(record.getMaintenanceDate());
         if (record.getNextMaintenanceDate() != null) {
-            tool.setNextMaintenanceDate(record.getNextMaintenanceDate());
+            newTool.setNextMaintenanceDate(record.getNextMaintenanceDate());
         }
-        toolRepository.save(tool);
+        toolRepository.save(newTool);
+
+        if (!oldToolId.equals(newToolId)) {
+            Tool oldTool = toolRepository.findById(oldToolId)
+                    .orElseThrow(() -> new RuntimeException("原工具不存在"));
+            List<MaintenanceRecord> oldToolRecords = maintenanceRecordRepository.findByToolIdOrderByMaintenanceDateDesc(oldToolId);
+            if (!oldToolRecords.isEmpty()) {
+                MaintenanceRecord latestRecord = oldToolRecords.get(0);
+                oldTool.setLastMaintenanceDate(latestRecord.getMaintenanceDate());
+                if (latestRecord.getNextMaintenanceDate() != null) {
+                    oldTool.setNextMaintenanceDate(latestRecord.getNextMaintenanceDate());
+                } else {
+                    resolveNextMaintenanceDate(latestRecord, oldTool);
+                    oldTool.setNextMaintenanceDate(latestRecord.getNextMaintenanceDate());
+                }
+            } else {
+                oldTool.setLastMaintenanceDate(null);
+                if (oldTool.getPurchaseDate() != null && oldTool.getMaintenanceCycleDays() != null) {
+                    oldTool.setNextMaintenanceDate(oldTool.getPurchaseDate().plusDays(oldTool.getMaintenanceCycleDays()));
+                } else {
+                    oldTool.setNextMaintenanceDate(null);
+                }
+            }
+            toolRepository.save(oldTool);
+        }
+
         return saved;
     }
 
@@ -126,8 +155,36 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
+        MaintenanceRecord record = maintenanceRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("保养记录不存在"));
+        Long toolId = record.getToolId();
         maintenanceRecordRepository.deleteById(id);
+        maintenanceRecordRepository.flush();
+
+        Tool tool = toolRepository.findById(toolId)
+                .orElseThrow(() -> new RuntimeException("工具不存在"));
+
+        List<MaintenanceRecord> remainingRecords = maintenanceRecordRepository.findByToolIdOrderByMaintenanceDateDesc(toolId);
+        if (!remainingRecords.isEmpty()) {
+            MaintenanceRecord latestRecord = remainingRecords.get(0);
+            tool.setLastMaintenanceDate(latestRecord.getMaintenanceDate());
+            if (latestRecord.getNextMaintenanceDate() != null) {
+                tool.setNextMaintenanceDate(latestRecord.getNextMaintenanceDate());
+            } else {
+                resolveNextMaintenanceDate(latestRecord, tool);
+                tool.setNextMaintenanceDate(latestRecord.getNextMaintenanceDate());
+            }
+        } else {
+            tool.setLastMaintenanceDate(null);
+            if (tool.getPurchaseDate() != null && tool.getMaintenanceCycleDays() != null) {
+                tool.setNextMaintenanceDate(tool.getPurchaseDate().plusDays(tool.getMaintenanceCycleDays()));
+            } else {
+                tool.setNextMaintenanceDate(null);
+            }
+        }
+        toolRepository.save(tool);
     }
 
     private void copyDtoToEntity(MaintenanceRecordDTO dto, MaintenanceRecord record) {

@@ -25,4 +25,6 @@ public interface ToolRepository extends JpaRepository<Tool, Long> {
     long countByCategoryId(Long categoryId);
 
     long countBySubCategoryId(Long subCategoryId);
+
+    List<Tool> findBySubCategoryId(Long subCategoryId);
 }
