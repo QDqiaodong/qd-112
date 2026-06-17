@@ -106,7 +106,24 @@ public class ToolServiceImpl implements ToolService {
     public Tool update(Long id, ToolDTO dto) {
         Tool tool = getById(id);
         ToolStatus oldStatus = tool.getStatus();
+        LocalDate oldPurchaseDate = tool.getPurchaseDate();
+        Integer oldMaintenanceCycleDays = tool.getMaintenanceCycleDays();
+        LocalDate oldLastMaintenanceDate = tool.getLastMaintenanceDate();
+        
         copyDtoToEntity(dto, tool);
+        
+        boolean purchaseDateChanged = !Objects.equals(oldPurchaseDate, tool.getPurchaseDate());
+        boolean cycleChanged = !Objects.equals(oldMaintenanceCycleDays, tool.getMaintenanceCycleDays());
+        boolean lastMaintenanceChanged = !Objects.equals(oldLastMaintenanceDate, tool.getLastMaintenanceDate());
+        boolean nextMaintenanceExplicitlySet = dto.getNextMaintenanceDate() != null;
+        
+        if ((purchaseDateChanged || cycleChanged || lastMaintenanceChanged) && !nextMaintenanceExplicitlySet) {
+            LocalDate baseDate = tool.getLastMaintenanceDate() != null ? tool.getLastMaintenanceDate() : tool.getPurchaseDate();
+            if (baseDate != null && tool.getMaintenanceCycleDays() != null && tool.getMaintenanceCycleDays() > 0) {
+                tool.setNextMaintenanceDate(baseDate.plusDays(tool.getMaintenanceCycleDays()));
+            }
+        }
+        
         ToolStatus newStatus = oldStatus;
         if (dto.getStatus() != null) {
             newStatus = ToolStatus.valueOf(dto.getStatus());
@@ -146,7 +163,7 @@ public class ToolServiceImpl implements ToolService {
 
     @Override
     public List<Tool> findDueMaintenance() {
-        return toolRepository.findByNextMaintenanceDateBefore(LocalDate.now());
+        return toolRepository.findByNextMaintenanceDateBeforeOrEqual(LocalDate.now());
     }
 
     @Override
