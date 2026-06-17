@@ -1,9 +1,12 @@
 package com.home.tools.service.impl;
 
 import com.home.tools.dto.CategoryDeletionCheck;
+import com.home.tools.dto.CategoryTreeNode;
 import com.home.tools.entity.Category;
+import com.home.tools.entity.CategoryMaintenanceItem;
 import com.home.tools.entity.MaintenanceItem;
 import com.home.tools.entity.Tool;
+import com.home.tools.repository.CategoryMaintenanceItemRepository;
 import com.home.tools.repository.CategoryRepository;
 import com.home.tools.repository.MaintenanceItemRepository;
 import com.home.tools.repository.MaintenanceRecordRepository;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,17 +30,20 @@ public class CategoryServiceImpl implements CategoryService {
     private final MaintenanceItemRepository maintenanceItemRepository;
     private final ToolRepository toolRepository;
     private final MaintenanceRecordRepository maintenanceRecordRepository;
+    private final CategoryMaintenanceItemRepository categoryMaintenanceItemRepository;
     private final CacheService cacheService;
 
     public CategoryServiceImpl(CategoryRepository categoryRepository,
                                MaintenanceItemRepository maintenanceItemRepository,
                                ToolRepository toolRepository,
                                MaintenanceRecordRepository maintenanceRecordRepository,
+                               CategoryMaintenanceItemRepository categoryMaintenanceItemRepository,
                                CacheService cacheService) {
         this.categoryRepository = categoryRepository;
         this.maintenanceItemRepository = maintenanceItemRepository;
         this.toolRepository = toolRepository;
         this.maintenanceRecordRepository = maintenanceRecordRepository;
+        this.categoryMaintenanceItemRepository = categoryMaintenanceItemRepository;
         this.cacheService = cacheService;
     }
 
@@ -50,6 +57,97 @@ public class CategoryServiceImpl implements CategoryService {
         List<Map<String, Object>> tree = buildTree(all, null);
         cacheService.cacheCategoryTree(all);
         return tree;
+    }
+
+    @Override
+    public List<CategoryTreeNode> getCategoryTreeWithStats() {
+        List<Category> allCategories = categoryRepository.findAll();
+        List<Tool> allTools = toolRepository.findAll();
+        List<MaintenanceItem> allMaintenanceItems = maintenanceItemRepository.findAll();
+        List<CategoryMaintenanceItem> allCategoryItems = categoryMaintenanceItemRepository.findAll();
+
+        Map<Long, Integer> toolCountMap = new HashMap<>();
+        Map<Long, Integer> maintenanceCountMap = new HashMap<>();
+
+        for (Category cat : allCategories) {
+            toolCountMap.put(cat.getId(), 0);
+            maintenanceCountMap.put(cat.getId(), 0);
+        }
+
+        for (Tool tool : allTools) {
+            if (tool.getCategoryId() != null) {
+                toolCountMap.merge(tool.getCategoryId(), 1, Integer::sum);
+            }
+            if (tool.getSubCategoryId() != null) {
+                toolCountMap.merge(tool.getSubCategoryId(), 1, Integer::sum);
+            }
+        }
+
+        for (CategoryMaintenanceItem item : allCategoryItems) {
+            if (item.getEnabled() != null && item.getEnabled()) {
+                maintenanceCountMap.merge(item.getCategoryId(), 1, Integer::sum);
+            }
+        }
+
+        int totalMaintenanceItems = allMaintenanceItems.size();
+
+        List<CategoryTreeNode> tree = buildTreeWithStats(
+            allCategories, null, toolCountMap, maintenanceCountMap, totalMaintenanceItems
+        );
+
+        tree.sort(Comparator.comparing(n -> n.getSortOrder() != null ? n.getSortOrder() : 0));
+
+        return tree;
+    }
+
+    @Override
+    public Category getById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+    }
+
+    @Override
+    @Transactional
+    public Category create(Category category) {
+        if (category.getParentId() != null) {
+            Category parent = getById(category.getParentId());
+            category.setLevel(parent.getLevel() + 1);
+        } else {
+            category.setLevel(1);
+        }
+        if (category.getSortOrder() == null) {
+            category.setSortOrder(0);
+        }
+        Category saved = categoryRepository.save(category);
+        cacheService.evictCategoryCache();
+        cacheService.cacheCategoryTree(categoryRepository.findAll());
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public Category update(Long id, Category category) {
+        Category existing = getById(id);
+        existing.setName(category.getName());
+        existing.setCode(category.getCode());
+        existing.setDescription(category.getDescription());
+        if (category.getSortOrder() != null) {
+            existing.setSortOrder(category.getSortOrder());
+        }
+        Category saved = categoryRepository.save(existing);
+        cacheService.evictCategoryCache();
+        cacheService.cacheCategoryTree(categoryRepository.findAll());
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public void updateSortOrder(Long id, Integer sortOrder) {
+        Category category = getById(id);
+        category.setSortOrder(sortOrder);
+        categoryRepository.save(category);
+        cacheService.evictCategoryCache();
+        cacheService.cacheCategoryTree(categoryRepository.findAll());
     }
 
     @Override
@@ -75,6 +173,52 @@ public class CategoryServiceImpl implements CategoryService {
                 tree.add(node);
             }
         }
+        return tree;
+    }
+
+    private List<CategoryTreeNode> buildTreeWithStats(List<Category> all, Long parentId,
+                                                       Map<Long, Integer> toolCountMap,
+                                                       Map<Long, Integer> maintenanceCountMap,
+                                                       int totalMaintenanceItems) {
+        List<CategoryTreeNode> tree = new ArrayList<>();
+        for (Category cat : all) {
+            boolean isChild = (parentId == null && cat.getParentId() == null) ||
+                    (parentId != null && parentId.equals(cat.getParentId()));
+            if (isChild) {
+                CategoryTreeNode node = new CategoryTreeNode();
+                node.setId(cat.getId());
+                node.setName(cat.getName());
+                node.setCode(cat.getCode());
+                node.setParentId(cat.getParentId());
+                node.setLevel(cat.getLevel());
+                node.setSortOrder(cat.getSortOrder());
+                node.setDescription(cat.getDescription());
+
+                int toolCount = toolCountMap.getOrDefault(cat.getId(), 0);
+                int maintenanceCount = maintenanceCountMap.getOrDefault(cat.getId(), 0);
+
+                List<CategoryTreeNode> children = buildTreeWithStats(
+                    all, cat.getId(), toolCountMap, maintenanceCountMap, totalMaintenanceItems
+                );
+
+                for (CategoryTreeNode child : children) {
+                    toolCount += child.getToolCount() != null ? child.getToolCount() : 0;
+                    maintenanceCount = Math.max(maintenanceCount,
+                        child.getMaintenanceItemCount() != null ? child.getMaintenanceItemCount() : 0);
+                }
+
+                node.setToolCount(toolCount);
+                node.setMaintenanceItemCount(maintenanceCount);
+                node.setMaintenanceItemTotal(totalMaintenanceItems);
+                node.setMaintenanceCoverageRate(
+                    totalMaintenanceItems > 0 ? (maintenanceCount * 100.0 / totalMaintenanceItems) : 0.0
+                );
+                node.setChildren(children);
+
+                tree.add(node);
+            }
+        }
+        tree.sort(Comparator.comparing(n -> n.getSortOrder() != null ? n.getSortOrder() : 0));
         return tree;
     }
 

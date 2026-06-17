@@ -59,6 +59,11 @@ const router = createRouter({
           component: () => import('@/pages/Categories/index.vue')
         },
         {
+          path: 'category-tree',
+          name: 'CategoryTreeMaintenance',
+          component: () => import('@/pages/CategoryTreeMaintenance/index.vue')
+        },
+        {
           path: 'location-matrix',
           name: 'LocationMatrix',
           component: () => import('@/pages/LocationMatrix/index.vue')

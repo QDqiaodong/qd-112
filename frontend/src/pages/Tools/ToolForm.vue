@@ -36,13 +36,32 @@
           <span class="ml-2 text-sm text-gray-400">天</span>
         </el-form-item>
         <el-form-item v-if="isEdit" label="工具状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择工具状态">
-            <el-option label="可用" value="AVAILABLE" />
-            <el-option label="使用中" value="IN_USE" />
-            <el-option label="保养中" value="MAINTENANCE" />
-            <el-option label="已借出" value="LOANED" />
-            <el-option label="已遗失" value="LOST" />
+          <div class="mb-2">
+            <span class="text-sm text-gray-500">当前状态：</span>
+            <el-tag :type="getStatusTagType(originalStatus as ToolStatus)">
+              {{ getStatusName(originalStatus as ToolStatus) }}
+            </el-tag>
+          </div>
+          <el-select v-model="form.status" placeholder="请选择工具状态" style="width: 100%">
+            <el-option
+              v-for="status in allowedStatusOptions"
+              :key="status.value"
+              :label="status.label"
+              :value="status.value"
+            />
           </el-select>
+          <div v-if="statusChanged && statusTransitionError" class="mt-2">
+            <el-alert :title="statusTransitionError" type="error" :closable="false" show-icon />
+          </div>
+          <div v-else-if="statusChanged" class="mt-2">
+            <el-alert title="状态变更合法" type="success" :closable="false" show-icon />
+          </div>
+          <div class="mt-2 text-xs text-gray-500">
+            <span>允许变更的状态：</span>
+            <span v-for="(s, i) in allowedStatusOptions" :key="s.value">
+              {{ s.label }}<span v-if="i < allowedStatusOptions.length - 1">、</span>
+            </span>
+          </div>
         </el-form-item>
         <el-form-item v-if="isEdit && statusChanged" label="状态变更原因" prop="statusReason">
           <el-input v-model="form.statusReason" type="textarea" :rows="2" placeholder="请输入状态变更原因" />
@@ -60,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -77,6 +96,8 @@ const categoryStore = useCategoryStore()
 const isEdit = computed(() => !!route.params.id)
 const formRef = ref<FormInstance>()
 const originalStatus = ref<ToolStatus | ''>('')
+const statusTransitionError = ref('')
+const allowedStatusOptions = ref<{ value: ToolStatus; label: string }[]>([])
 
 const form = reactive({
   name: '',
@@ -108,6 +129,62 @@ const categoryValue = computed({
     form.subCategoryId = val.subCategoryId
   }
 })
+
+function getStatusName(status: ToolStatus): string {
+  if (!status) return '未知'
+  const map: Record<ToolStatus, string> = {
+    AVAILABLE: '可用',
+    IN_USE: '使用中',
+    MAINTENANCE: '保养中',
+    LOANED: '借出',
+    LOST: '丢失'
+  }
+  return map[status] || status
+}
+
+function getStatusTagType(status: ToolStatus): string {
+  if (!status) return 'info'
+  const map: Record<ToolStatus, string> = {
+    AVAILABLE: 'success',
+    IN_USE: 'primary',
+    MAINTENANCE: 'warning',
+    LOANED: 'info',
+    LOST: 'danger'
+  }
+  return map[status] || 'info'
+}
+
+async function loadAllowedStatusTransitions(currentStatus: ToolStatus) {
+  const allowed = await toolStore.fetchAllowedStatusTransitions(currentStatus)
+  allowedStatusOptions.value = allowed.map(s => ({
+    value: s,
+    label: getStatusName(s)
+  }))
+}
+
+async function checkStatusTransition(newStatus: ToolStatus) {
+  if (!originalStatus.value || !newStatus || originalStatus.value === newStatus) {
+    statusTransitionError.value = ''
+    return true
+  }
+  const result = await toolStore.validateStatusTransition(Number(route.params.id), newStatus)
+  if (result.valid) {
+    statusTransitionError.value = ''
+    return true
+  } else {
+    statusTransitionError.value = result.message + '：' + result.reason
+    return false
+  }
+}
+
+watch(
+  () => form.status,
+  (newVal) => {
+    if (isEdit.value && newVal && originalStatus.value) {
+      checkStatusTransition(newVal as ToolStatus)
+    }
+  }
+)
 
 const rules: FormRules = {
   name: [{ required: true, message: '请输入工具名称', trigger: 'blur' }],
@@ -142,8 +219,7 @@ const rules: FormRules = {
 onMounted(async () => {
   await categoryStore.fetchCategoryTree()
   if (isEdit.value) {
-    await toolStore.fetchTool(Number(route.params.id))
-    const tool = toolStore.currentTool
+    const tool = await toolStore.fetchTool(Number(route.params.id))
     if (tool) {
       Object.assign(form, {
         name: tool.name,
@@ -160,12 +236,22 @@ onMounted(async () => {
         status: tool.status
       })
       originalStatus.value = tool.status
+      await loadAllowedStatusTransitions(tool.status)
     }
   }
 })
 
 async function handleSubmit() {
   await formRef.value?.validate()
+
+  if (statusChanged.value && form.status) {
+    const isValid = await checkStatusTransition(form.status as ToolStatus)
+    if (!isValid) {
+      ElMessage.error(statusTransitionError.value || '状态变更不合法')
+      return
+    }
+  }
+
   if (isEdit.value) {
     const updateData: Partial<Tool> & { operator?: string; statusReason?: string } = {
       name: form.name,
@@ -185,8 +271,10 @@ async function handleSubmit() {
       updateData.statusReason = form.statusReason
       updateData.operator = form.operator
     }
-    await toolStore.updateTool(Number(route.params.id), updateData)
-    ElMessage.success('更新成功')
+    const result = await toolStore.updateTool(Number(route.params.id), updateData)
+    if (result) {
+      router.push('/tools')
+    }
   } else {
     const createData: Partial<Tool> = {
       name: form.name,
@@ -201,9 +289,10 @@ async function handleSubmit() {
       price: form.price,
       maintenanceCycleDays: form.maintenanceCycleDays
     }
-    await toolStore.createTool(createData)
-    ElMessage.success('创建成功')
+    const result = await toolStore.createTool(createData)
+    if (result) {
+      router.push('/tools')
+    }
   }
-  router.push('/tools')
 }
 </script>

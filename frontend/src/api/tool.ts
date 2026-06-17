@@ -1,5 +1,5 @@
 import request from './request'
-import type { Tool, ToolWithScore, ToolAvailabilityScore, PageResult, ApiResponse, MaintenanceTrack } from '@/types'
+import type { Tool, ToolWithScore, ToolAvailabilityScore, PageResult, ApiResponse, MaintenanceTrack, StatusTransitionResult, ToolStatus } from '@/types'
 
 export function getTools(params?: Record<string, any>): Promise<ApiResponse<PageResult<Tool>>> {
   return request.get('/tools', { params })
@@ -15,6 +15,14 @@ export function getTool(id: number): Promise<ApiResponse<Tool>> {
 
 export function getToolAvailabilityScore(id: number): Promise<ApiResponse<ToolAvailabilityScore>> {
   return request.get(`/tools/${id}/availability-score`)
+}
+
+export function validateStatusTransition(id: number, newStatus: ToolStatus): Promise<ApiResponse<StatusTransitionResult>> {
+  return request.get(`/tools/${id}/status-transition-validate`, { params: { newStatus } })
+}
+
+export function getAllowedStatusTransitions(currentStatus: ToolStatus): Promise<ApiResponse<ToolStatus[]>> {
+  return request.get('/tools/status-transitions', { params: { currentStatus } })
 }
 
 export function createTool(data: Partial<Tool>): Promise<ApiResponse<Tool>> {

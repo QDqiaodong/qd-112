@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Tool, ToolWithScore, ToolAvailabilityScore } from '@/types'
+import type { Tool, ToolWithScore, ToolAvailabilityScore, StatusTransitionResult, ToolStatus } from '@/types'
 import * as toolApi from '@/api/tool'
+import { ElMessage } from 'element-plus'
 
 export const useToolStore = defineStore('tool', () => {
   const tools = ref<Tool[]>([])
@@ -11,6 +12,7 @@ export const useToolStore = defineStore('tool', () => {
   const monthlyMaintenanceTools = ref<Tool[]>([])
   const total = ref(0)
   const loading = ref(false)
+  const allowedStatusTransitions = ref<ToolStatus[]>([])
 
   async function fetchTools(params?: Record<string, any>) {
     loading.value = true
@@ -39,6 +41,7 @@ export const useToolStore = defineStore('tool', () => {
     try {
       const res = await toolApi.getTool(id)
       currentTool.value = res.data
+      return res.data
     } finally {
       loading.value = false
     }
@@ -50,18 +53,48 @@ export const useToolStore = defineStore('tool', () => {
     return res.data
   }
 
+  async function validateStatusTransition(id: number, newStatus: ToolStatus): Promise<StatusTransitionResult> {
+    const res = await toolApi.validateStatusTransition(id, newStatus)
+    return res.data
+  }
+
+  async function fetchAllowedStatusTransitions(currentStatus: ToolStatus) {
+    const res = await toolApi.getAllowedStatusTransitions(currentStatus)
+    allowedStatusTransitions.value = res.data
+    return res.data
+  }
+
   async function createTool(data: Partial<Tool>) {
     const res = await toolApi.createTool(data)
-    return res.data
+    if (res.code === 200) {
+      ElMessage.success('创建成功')
+      return res.data
+    } else {
+      ElMessage.error(res.message || '创建失败')
+      return null
+    }
   }
 
   async function updateTool(id: number, data: Partial<Tool> & { operator?: string; statusReason?: string }) {
     const res = await toolApi.updateTool(id, data)
-    return res.data
+    if (res.code === 200) {
+      ElMessage.success('更新成功')
+      return res.data
+    } else {
+      ElMessage.error(res.message || '更新失败')
+      return null
+    }
   }
 
   async function deleteTool(id: number) {
-    await toolApi.deleteTool(id)
+    const res = await toolApi.deleteTool(id)
+    if (res.code === 200) {
+      ElMessage.success('删除成功')
+      return true
+    } else {
+      ElMessage.error(res.message || '删除失败')
+      return false
+    }
   }
 
   async function fetchToolOptions() {
@@ -87,10 +120,13 @@ export const useToolStore = defineStore('tool', () => {
     monthlyMaintenanceTools,
     total,
     loading,
+    allowedStatusTransitions,
     fetchTools,
     fetchToolsWithScore,
     fetchTool,
     fetchToolAvailabilityScore,
+    validateStatusTransition,
+    fetchAllowedStatusTransitions,
     createTool,
     updateTool,
     deleteTool,

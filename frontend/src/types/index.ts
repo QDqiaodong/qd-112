@@ -160,6 +160,27 @@ export interface Category {
   children: Category[]
 }
 
+export interface CategoryTreeNode {
+  id: number
+  name: string
+  code: string
+  parentId: number
+  level: number
+  sortOrder: number
+  description: string
+  toolCount: number
+  maintenanceItemCount: number
+  maintenanceItemTotal: number
+  maintenanceCoverageRate: number
+  children: CategoryTreeNode[]
+}
+
+export interface StatusTransitionResult {
+  valid: boolean
+  message: string
+  reason: string
+}
+
 export interface CategoryDeletionCheck {
   canDelete: boolean
   toolCount: number

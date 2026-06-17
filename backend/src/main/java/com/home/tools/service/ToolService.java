@@ -2,10 +2,12 @@ package com.home.tools.service;
 
 import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
+import com.home.tools.dto.StatusTransitionResult;
 import com.home.tools.dto.ToolAvailabilityScore;
 import com.home.tools.dto.ToolDTO;
 import com.home.tools.dto.ToolWithScore;
 import com.home.tools.entity.Tool;
+import com.home.tools.entity.ToolStatus;
 import java.util.List;
 import java.util.Map;
 
@@ -38,4 +40,8 @@ public interface ToolService {
     ToolAvailabilityScore calculateAvailabilityScore(Long toolId);
 
     ToolAvailabilityScore calculateAvailabilityScore(Tool tool);
+
+    StatusTransitionResult validateStatusTransition(Long toolId, ToolStatus newStatus);
+
+    List<ToolStatus> getAllowedStatusTransitions(ToolStatus currentStatus);
 }

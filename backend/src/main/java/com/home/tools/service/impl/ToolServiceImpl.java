@@ -2,6 +2,7 @@ package com.home.tools.service.impl;
 
 import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
+import com.home.tools.dto.StatusTransitionResult;
 import com.home.tools.dto.ToolAvailabilityScore;
 import com.home.tools.dto.ToolDTO;
 import com.home.tools.dto.ToolWithScore;
@@ -9,6 +10,7 @@ import com.home.tools.entity.*;
 import com.home.tools.repository.*;
 import com.home.tools.service.ToolService;
 import com.home.tools.util.LocationUtils;
+import com.home.tools.util.StatusTransitionUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -100,6 +102,7 @@ public class ToolServiceImpl implements ToolService {
     }
 
     @Override
+    @Transactional
     public Tool update(Long id, ToolDTO dto) {
         Tool tool = getById(id);
         ToolStatus oldStatus = tool.getStatus();
@@ -107,6 +110,10 @@ public class ToolServiceImpl implements ToolService {
         ToolStatus newStatus = oldStatus;
         if (dto.getStatus() != null) {
             newStatus = ToolStatus.valueOf(dto.getStatus());
+            StatusTransitionResult validation = StatusTransitionUtil.validate(oldStatus, newStatus);
+            if (!validation.isValid()) {
+                throw new RuntimeException(validation.getMessage() + "：" + validation.getReason());
+            }
             tool.setStatus(newStatus);
         }
         Tool saved = toolRepository.save(tool);
@@ -167,6 +174,17 @@ public class ToolServiceImpl implements ToolService {
                         LinkedHashMap::new,
                         Collectors.counting()));
         return counts;
+    }
+
+    @Override
+    public StatusTransitionResult validateStatusTransition(Long toolId, ToolStatus newStatus) {
+        Tool tool = getById(toolId);
+        return StatusTransitionUtil.validate(tool.getStatus(), newStatus);
+    }
+
+    @Override
+    public List<ToolStatus> getAllowedStatusTransitions(ToolStatus currentStatus) {
+        return StatusTransitionUtil.getAllowedTargets(currentStatus);
     }
 
     private void copyDtoToEntity(ToolDTO dto, Tool tool) {

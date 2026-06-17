@@ -3,11 +3,13 @@ package com.home.tools.controller;
 import com.home.tools.dto.ApiResponse;
 import com.home.tools.dto.MaintenanceTrackDTO;
 import com.home.tools.dto.PageResult;
+import com.home.tools.dto.StatusTransitionResult;
 import com.home.tools.dto.ToolAvailabilityScore;
 import com.home.tools.dto.ToolDTO;
 import com.home.tools.dto.ToolWithScore;
 import com.home.tools.entity.MaintenanceRecord;
 import com.home.tools.entity.Tool;
+import com.home.tools.entity.ToolStatus;
 import com.home.tools.entity.UsageRecord;
 import com.home.tools.service.CacheService;
 import com.home.tools.service.MaintenanceRecordService;
@@ -64,6 +66,19 @@ public class ToolController {
         return ApiResponse.ok(toolService.calculateAvailabilityScore(id));
     }
 
+    @GetMapping("/{id}/status-transition-validate")
+    public ApiResponse<StatusTransitionResult> validateStatusTransition(
+            @PathVariable Long id,
+            @RequestParam ToolStatus newStatus) {
+        return ApiResponse.ok(toolService.validateStatusTransition(id, newStatus));
+    }
+
+    @GetMapping("/status-transitions")
+    public ApiResponse<List<ToolStatus>> getAllowedStatusTransitions(
+            @RequestParam ToolStatus currentStatus) {
+        return ApiResponse.ok(toolService.getAllowedStatusTransitions(currentStatus));
+    }
+
     @PostMapping
     public ApiResponse<Tool> create(@RequestBody ToolDTO dto) {
         Tool result = toolService.create(dto);
@@ -73,9 +88,13 @@ public class ToolController {
 
     @PutMapping("/{id}")
     public ApiResponse<Tool> update(@PathVariable Long id, @RequestBody ToolDTO dto) {
-        Tool result = toolService.update(id, dto);
-        cacheService.evictStatsCache();
-        return ApiResponse.ok(result);
+        try {
+            Tool result = toolService.update(id, dto);
+            cacheService.evictStatsCache();
+            return ApiResponse.ok(result);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

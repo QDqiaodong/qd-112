@@ -2,6 +2,7 @@ package com.home.tools.controller;
 
 import com.home.tools.dto.ApiResponse;
 import com.home.tools.dto.CategoryDeletionCheck;
+import com.home.tools.dto.CategoryTreeNode;
 import com.home.tools.entity.*;
 import com.home.tools.repository.CategoryRepository;
 import com.home.tools.repository.MaintenanceRecordRepository;
@@ -56,6 +57,37 @@ public class CategoryController {
     @GetMapping("/categories/tree")
     public ApiResponse<List<Map<String, Object>>> getCategoryTree() {
         return ApiResponse.ok(categoryService.getCategoryTree());
+    }
+
+    @GetMapping("/categories/tree-with-stats")
+    public ApiResponse<List<CategoryTreeNode>> getCategoryTreeWithStats() {
+        return ApiResponse.ok(categoryService.getCategoryTreeWithStats());
+    }
+
+    @GetMapping("/categories/{id}")
+    public ApiResponse<Category> getCategoryById(@PathVariable Long id) {
+        return ApiResponse.ok(categoryService.getById(id));
+    }
+
+    @PostMapping("/categories")
+    public ApiResponse<Category> createCategory(@RequestBody Category category) {
+        Category result = categoryService.create(category);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
+    }
+
+    @PutMapping("/categories/{id}")
+    public ApiResponse<Category> updateCategory(@PathVariable Long id, @RequestBody Category category) {
+        Category result = categoryService.update(id, category);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(result);
+    }
+
+    @PatchMapping("/categories/{id}/sort")
+    public ApiResponse<Void> updateSortOrder(@PathVariable Long id, @RequestParam Integer sortOrder) {
+        categoryService.updateSortOrder(id, sortOrder);
+        cacheService.evictStatsCache();
+        return ApiResponse.ok(null);
     }
 
     @GetMapping("/maintenance-items")
