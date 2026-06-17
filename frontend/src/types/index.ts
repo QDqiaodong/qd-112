@@ -95,6 +95,10 @@ export interface Inventory {
   loanedTools: number
   maintenanceTools: number
   lostTools: number
+  mismatchedTools: number
+  uncheckedTools: number
+  completed: boolean
+  completeTime: string
   operator: string
   remarks: string
   createTime: string
@@ -147,6 +151,34 @@ export interface DifferenceGroup {
   groupKey: string
   groupType: string
   items: DifferenceItem[]
+  totalCount: number
+  checkedCount: number
+  uncheckedCount: number
+  mismatchedCount: number
+  lostCount: number
+  completionPercent: number
+}
+
+export interface InventoryProgress {
+  totalTools: number
+  checkedCount: number
+  uncheckedCount: number
+  mismatchedCount: number
+  lostCount: number
+  checkedPercent: number
+  uncheckedPercent: number
+  mismatchedPercent: number
+  lostPercent: number
+}
+
+export interface InventoryCompletionResult {
+  success: boolean
+  message: string
+  totalUpdated: number
+  statusMismatchCount: number
+  lostCount: number
+  checkedCount: number
+  uncheckedCount: number
 }
 
 export interface Category {

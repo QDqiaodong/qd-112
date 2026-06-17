@@ -2,8 +2,10 @@ package com.home.tools.service.impl;
 
 import com.home.tools.dto.DifferenceGroupDTO;
 import com.home.tools.dto.DifferenceItemDTO;
+import com.home.tools.dto.InventoryCompletionResultDTO;
 import com.home.tools.dto.InventoryDTO;
 import com.home.tools.dto.InventoryItemDTO;
+import com.home.tools.dto.InventoryProgressDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.entity.Category;
 import com.home.tools.entity.Inventory;
@@ -21,7 +23,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -61,6 +65,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @Transactional
     public Inventory createInventory(InventoryDTO dto) {
         Inventory inventory = new Inventory();
         inventory.setInventoryDate(dto.getInventoryDate());
@@ -82,6 +87,9 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setMaintenanceTools(statusCounts.get(ToolStatus.MAINTENANCE.name()));
         inventory.setLostTools(statusCounts.get(ToolStatus.LOST.name()));
         inventory.setCheckedTools(0);
+        inventory.setMismatchedTools(0);
+        inventory.setUncheckedTools(allTools.size());
+        inventory.setCompleted(false);
 
         Inventory saved = inventoryRepository.save(inventory);
 
@@ -121,6 +129,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @Transactional
     public InventoryItem updateItem(Long inventoryId, InventoryItemDTO dto) {
         List<InventoryItem> items = inventoryItemRepository.findByInventoryId(inventoryId);
         InventoryItem item = items.stream()
@@ -133,50 +142,220 @@ public class InventoryServiceImpl implements InventoryService {
 
         InventoryItem saved = inventoryItemRepository.save(item);
 
+        updateInventoryStats(inventoryId);
+
+        return saved;
+    }
+
+    private void updateInventoryStats(Long inventoryId) {
         List<InventoryItem> allItems = inventoryItemRepository.findByInventoryId(inventoryId);
         long checkedCount = allItems.stream().filter(InventoryItem::getChecked).count();
+        long uncheckedCount = allItems.stream().filter(i -> !i.getChecked()).count();
+        long mismatchedCount = allItems.stream()
+                .filter(i -> !i.getExpectedStatus().equals(i.getActualStatus())).count();
+        long lostCount = allItems.stream()
+                .filter(i -> "LOST".equals(i.getActualStatus())).count();
+
         Inventory inventory = inventoryRepository.findById(inventoryId).orElse(null);
         if (inventory != null) {
             inventory.setCheckedTools((int) checkedCount);
+            inventory.setUncheckedTools((int) uncheckedCount);
+            inventory.setMismatchedTools((int) mismatchedCount);
+            inventory.setLostTools((int) lostCount);
             inventoryRepository.save(inventory);
         }
+    }
 
-        return saved;
+    @Override
+    public InventoryProgressDTO getInventoryProgress(Long inventoryId) {
+        List<InventoryItem> allItems = inventoryItemRepository.findByInventoryId(inventoryId);
+        int total = allItems.size();
+
+        int checkedCount = 0;
+        int uncheckedCount = 0;
+        int mismatchedCount = 0;
+        int lostCount = 0;
+
+        for (InventoryItem item : allItems) {
+            boolean isMismatched = !item.getExpectedStatus().equals(item.getActualStatus());
+            boolean isLost = "LOST".equals(item.getActualStatus());
+
+            if (item.getChecked()) {
+                checkedCount++;
+            } else {
+                uncheckedCount++;
+            }
+            if (isMismatched) {
+                mismatchedCount++;
+            }
+            if (isLost) {
+                lostCount++;
+            }
+        }
+
+        InventoryProgressDTO progress = new InventoryProgressDTO();
+        progress.setTotalTools(total);
+        progress.setCheckedCount(checkedCount);
+        progress.setUncheckedCount(uncheckedCount);
+        progress.setMismatchedCount(mismatchedCount);
+        progress.setLostCount(lostCount);
+
+        if (total > 0) {
+            progress.setCheckedPercent(Math.round(checkedCount * 10000.0 / total) / 100.0);
+            progress.setUncheckedPercent(Math.round(uncheckedCount * 10000.0 / total) / 100.0);
+            progress.setMismatchedPercent(Math.round(mismatchedCount * 10000.0 / total) / 100.0);
+            progress.setLostPercent(Math.round(lostCount * 10000.0 / total) / 100.0);
+        } else {
+            progress.setCheckedPercent(0.0);
+            progress.setUncheckedPercent(0.0);
+            progress.setMismatchedPercent(0.0);
+            progress.setLostPercent(0.0);
+        }
+
+        return progress;
+    }
+
+    @Override
+    @Transactional
+    public InventoryCompletionResultDTO completeInventory(Long inventoryId) {
+        InventoryCompletionResultDTO result = new InventoryCompletionResultDTO();
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new RuntimeException("Inventory not found"));
+
+        if (Boolean.TRUE.equals(inventory.getCompleted())) {
+            result.setSuccess(false);
+            result.setMessage("该盘点已完成，无需重复操作");
+            return result;
+        }
+
+        List<InventoryItem> allItems = inventoryItemRepository.findByInventoryId(inventoryId);
+
+        int checkedCount = 0;
+        int uncheckedCount = 0;
+        int mismatchedCount = 0;
+        int lostCount = 0;
+        int updatedCount = 0;
+
+        Map<Long, InventoryItem> itemByToolId = new HashMap<>();
+        for (InventoryItem item : allItems) {
+            itemByToolId.put(item.getToolId(), item);
+            boolean isMismatched = !item.getExpectedStatus().equals(item.getActualStatus());
+            boolean isLost = "LOST".equals(item.getActualStatus());
+
+            if (item.getChecked()) {
+                checkedCount++;
+            } else {
+                uncheckedCount++;
+            }
+            if (isMismatched) {
+                mismatchedCount++;
+            }
+            if (isLost) {
+                lostCount++;
+            }
+        }
+
+        List<Long> toolIds = new ArrayList<>(itemByToolId.keySet());
+        List<Tool> tools = toolRepository.findAllById(toolIds);
+
+        for (Tool tool : tools) {
+            InventoryItem item = itemByToolId.get(tool.getId());
+            if (item == null) continue;
+
+            String actualStatusStr = item.getActualStatus();
+            try {
+                ToolStatus actualStatus = ToolStatus.valueOf(actualStatusStr);
+                if (!tool.getStatus().equals(actualStatus)) {
+                    tool.setStatus(actualStatus);
+                    toolRepository.save(tool);
+                    updatedCount++;
+                }
+            } catch (IllegalArgumentException e) {
+                // 无效状态，跳过
+            }
+        }
+
+        inventory.setCheckedTools(checkedCount);
+        inventory.setUncheckedTools(uncheckedCount);
+        inventory.setMismatchedTools(mismatchedCount);
+        inventory.setLostTools(lostCount);
+        inventory.setCompleted(true);
+        inventory.setCompleteTime(LocalDateTime.now());
+        inventoryRepository.save(inventory);
+
+        result.setSuccess(true);
+        result.setMessage("盘点完成，已根据盘点结果更新工具状态");
+        result.setTotalUpdated(updatedCount);
+        result.setStatusMismatchCount(mismatchedCount);
+        result.setLostCount(lostCount);
+        result.setCheckedCount(checkedCount);
+        result.setUncheckedCount(uncheckedCount);
+
+        return result;
     }
 
     @Override
     public List<DifferenceGroupDTO> getDifferenceGroups(Long inventoryId, String groupBy) {
         List<InventoryItem> allItems = inventoryItemRepository.findByInventoryId(inventoryId);
 
-        List<InventoryItem> differenceItems = allItems.stream()
-                .filter(item -> {
-                    boolean statusMismatch = !item.getExpectedStatus().equals(item.getActualStatus());
-                    boolean unchecked = !item.getChecked();
-                    boolean lost = "LOST".equals(item.getActualStatus());
-                    boolean maintenance = "MAINTENANCE".equals(item.getActualStatus());
-                    return statusMismatch || unchecked || lost || maintenance;
-                })
-                .collect(Collectors.toList());
-
-        Map<String, List<InventoryItem>> grouped;
+        Map<String, List<InventoryItem>> allGrouped;
         if ("location".equals(groupBy)) {
-            grouped = differenceItems.stream()
+            allGrouped = allItems.stream()
                     .collect(Collectors.groupingBy(
                             item -> LocationUtils.normalizeLocationForDisplay(item.getLocation()),
                             LinkedHashMap::new, Collectors.toList()));
         } else {
-            grouped = differenceItems.stream()
+            allGrouped = allItems.stream()
                     .collect(Collectors.groupingBy(
                             item -> item.getCategoryName() != null ? item.getCategoryName() : "未分类",
                             LinkedHashMap::new, Collectors.toList()));
         }
 
         List<DifferenceGroupDTO> result = new ArrayList<>();
-        for (Map.Entry<String, List<InventoryItem>> entry : grouped.entrySet()) {
+        for (Map.Entry<String, List<InventoryItem>> entry : allGrouped.entrySet()) {
+            List<InventoryItem> groupItems = entry.getValue();
+
+            int groupTotal = groupItems.size();
+            int groupChecked = 0;
+            int groupUnchecked = 0;
+            int groupMismatched = 0;
+            int groupLost = 0;
+
+            List<InventoryItem> differenceItems = new ArrayList<>();
+            for (InventoryItem item : groupItems) {
+                boolean isMismatched = !item.getExpectedStatus().equals(item.getActualStatus());
+                boolean isUnchecked = !item.getChecked();
+                boolean isLost = "LOST".equals(item.getActualStatus());
+                boolean isMaintenance = "MAINTENANCE".equals(item.getActualStatus());
+
+                if (item.getChecked()) {
+                    groupChecked++;
+                } else {
+                    groupUnchecked++;
+                }
+                if (isMismatched) {
+                    groupMismatched++;
+                }
+                if (isLost) {
+                    groupLost++;
+                }
+
+                if (isMismatched || isUnchecked || isLost || isMaintenance) {
+                    differenceItems.add(item);
+                }
+            }
+
             DifferenceGroupDTO group = new DifferenceGroupDTO();
             group.setGroupKey(entry.getKey());
             group.setGroupType(groupBy);
-            List<DifferenceItemDTO> diffItems = entry.getValue().stream().map(item -> {
+            group.setTotalCount(groupTotal);
+            group.setCheckedCount(groupChecked);
+            group.setUncheckedCount(groupUnchecked);
+            group.setMismatchedCount(groupMismatched);
+            group.setLostCount(groupLost);
+            group.setCompletionPercent(groupTotal > 0 ? Math.round(groupChecked * 10000.0 / groupTotal) / 100.0 : 0.0);
+
+            List<DifferenceItemDTO> diffItems = differenceItems.stream().map(item -> {
                 DifferenceItemDTO diff = new DifferenceItemDTO();
                 diff.setToolId(item.getToolId());
                 diff.setToolName(item.getToolName());

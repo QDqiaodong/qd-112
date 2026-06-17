@@ -1,8 +1,10 @@
 package com.home.tools.service;
 
 import com.home.tools.dto.DifferenceGroupDTO;
+import com.home.tools.dto.InventoryCompletionResultDTO;
 import com.home.tools.dto.InventoryDTO;
 import com.home.tools.dto.InventoryItemDTO;
+import com.home.tools.dto.InventoryProgressDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.entity.Inventory;
 import com.home.tools.entity.InventoryItem;
@@ -21,4 +23,8 @@ public interface InventoryService {
     InventoryItem updateItem(Long inventoryId, InventoryItemDTO dto);
 
     List<DifferenceGroupDTO> getDifferenceGroups(Long inventoryId, String groupBy);
+
+    InventoryProgressDTO getInventoryProgress(Long inventoryId);
+
+    InventoryCompletionResultDTO completeInventory(Long inventoryId);
 }

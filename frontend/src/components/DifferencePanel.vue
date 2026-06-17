@@ -48,10 +48,43 @@
         :key="group.groupKey"
         class="border-b border-gray-50 last:border-b-0"
       >
-        <div class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 sticky top-0 z-10">
-          <component :is="groupBy === 'category' ? FolderOpen : MapPin" :size="14" class="text-gray-500" />
-          <span class="text-sm font-medium text-gray-700">{{ group.groupKey }}</span>
-          <span class="text-xs text-gray-400">{{ group.items.length }} 项</span>
+        <div class="px-4 py-2.5 bg-gray-50 sticky top-0 z-10">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <component :is="groupBy === 'category' ? FolderOpen : MapPin" :size="14" class="text-gray-500" />
+              <span class="text-sm font-medium text-gray-700">{{ group.groupKey }}</span>
+              <span class="text-xs text-gray-400">{{ group.totalCount || group.items.length }} 项</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium" :class="getCompletionClass(group.completionPercent || 0)">
+                完成 {{ group.completionPercent || 0 }}%
+              </span>
+              <el-progress
+                :percentage="group.completionPercent || 0"
+                :stroke-width="4"
+                :color="getProgressColor(group.completionPercent || 0)"
+                class="w-20"
+              />
+            </div>
+          </div>
+          <div v-if="group.totalCount" class="flex gap-3 text-xs">
+            <span class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-green-500"></span>
+              <span class="text-gray-500">已核对 {{ group.checkedCount || 0 }}</span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span class="text-gray-500">未核对 {{ group.uncheckedCount || 0 }}</span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              <span class="text-gray-500">不符 {{ group.mismatchedCount || 0 }}</span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+              <span class="text-gray-500">遗失 {{ group.lostCount || 0 }}</span>
+            </span>
+          </div>
         </div>
         <el-table :data="group.items" size="small" :show-header="true" class="diff-table">
           <el-table-column label="工具" min-width="160">
@@ -146,6 +179,20 @@ function diffTypeClass(type: string): string {
     MAINTENANCE: 'bg-orange-100 text-orange-700'
   }
   return map[type] || 'bg-gray-100 text-gray-700'
+}
+
+function getCompletionClass(percent: number): string {
+  if (percent >= 100) return 'text-green-600'
+  if (percent >= 70) return 'text-blue-600'
+  if (percent >= 40) return 'text-amber-600'
+  return 'text-red-600'
+}
+
+function getProgressColor(percent: number): string {
+  if (percent >= 100) return '#10b981'
+  if (percent >= 70) return '#3b82f6'
+  if (percent >= 40) return '#f59e0b'
+  return '#ef4444'
 }
 
 async function handleGroupChange(val: string) {

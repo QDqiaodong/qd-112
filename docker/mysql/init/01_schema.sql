@@ -88,10 +88,15 @@ CREATE TABLE IF NOT EXISTS inventory (
     loaned_tools INT DEFAULT 0,
     maintenance_tools INT DEFAULT 0,
     lost_tools INT DEFAULT 0,
+    mismatched_tools INT DEFAULT 0,
+    unchecked_tools INT DEFAULT 0,
+    completed TINYINT DEFAULT 0,
+    complete_time DATETIME,
     operator VARCHAR(50),
     remarks TEXT,
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_inventory_date (inventory_date)
+    INDEX idx_inventory_date (inventory_date),
+    INDEX idx_completed (completed)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS inventory_item (

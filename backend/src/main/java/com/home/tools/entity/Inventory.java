@@ -29,6 +29,14 @@ public class Inventory {
 
     private Integer lostTools;
 
+    private Integer mismatchedTools;
+
+    private Integer uncheckedTools;
+
+    private Boolean completed;
+
+    private LocalDateTime completeTime;
+
     private String operator;
 
     private String remarks;
@@ -57,6 +65,14 @@ public class Inventory {
     public void setMaintenanceTools(Integer maintenanceTools) { this.maintenanceTools = maintenanceTools; }
     public Integer getLostTools() { return lostTools; }
     public void setLostTools(Integer lostTools) { this.lostTools = lostTools; }
+    public Integer getMismatchedTools() { return mismatchedTools; }
+    public void setMismatchedTools(Integer mismatchedTools) { this.mismatchedTools = mismatchedTools; }
+    public Integer getUncheckedTools() { return uncheckedTools; }
+    public void setUncheckedTools(Integer uncheckedTools) { this.uncheckedTools = uncheckedTools; }
+    public Boolean getCompleted() { return completed; }
+    public void setCompleted(Boolean completed) { this.completed = completed; }
+    public LocalDateTime getCompleteTime() { return completeTime; }
+    public void setCompleteTime(LocalDateTime completeTime) { this.completeTime = completeTime; }
     public String getOperator() { return operator; }
     public void setOperator(String operator) { this.operator = operator; }
     public String getRemarks() { return remarks; }
