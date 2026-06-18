@@ -1,5 +1,5 @@
 import request from './request'
-import type { MaintenanceRecord, PageResult, ApiResponse } from '@/types'
+import type { MaintenanceRecord, Tool, PageResult, ApiResponse } from '@/types'
 
 export function getMaintenanceRecords(params?: Record<string, any>): Promise<ApiResponse<PageResult<MaintenanceRecord>>> {
   return request.get('/maintenance', { params })
@@ -9,7 +9,7 @@ export function getMaintenanceByTool(toolId: number, params?: Record<string, any
   return request.get(`/tools/${toolId}/maintenance`, { params })
 }
 
-export function getDueMaintenance(): Promise<ApiResponse<MaintenanceRecord[]>> {
+export function getDueMaintenance(): Promise<ApiResponse<Tool[]>> {
   return request.get('/maintenance/due')
 }
 

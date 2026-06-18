@@ -43,8 +43,9 @@ public class ToolController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long categoryId) {
-        return ApiResponse.ok(toolService.list(page, size, keyword, categoryId));
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long subCategoryId) {
+        return ApiResponse.ok(toolService.list(page, size, keyword, categoryId, subCategoryId));
     }
 
     @GetMapping("/with-score")
@@ -52,8 +53,9 @@ public class ToolController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long categoryId) {
-        return ApiResponse.ok(toolService.listWithScore(page, size, keyword, categoryId));
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long subCategoryId) {
+        return ApiResponse.ok(toolService.listWithScore(page, size, keyword, categoryId, subCategoryId));
     }
 
     @GetMapping("/{id}")

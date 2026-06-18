@@ -13,9 +13,9 @@ import java.util.Map;
 
 public interface ToolService {
 
-    PageResult<Tool> list(Integer page, Integer size, String keyword, Long categoryId);
+    PageResult<Tool> list(Integer page, Integer size, String keyword, Long categoryId, Long subCategoryId);
 
-    PageResult<ToolWithScore> listWithScore(Integer page, Integer size, String keyword, Long categoryId);
+    PageResult<ToolWithScore> listWithScore(Integer page, Integer size, String keyword, Long categoryId, Long subCategoryId);
 
     Tool getById(Long id);
 

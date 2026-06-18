@@ -4,6 +4,7 @@ import com.home.tools.dto.ApiResponse;
 import com.home.tools.dto.MaintenanceRecordDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.entity.MaintenanceRecord;
+import com.home.tools.entity.Tool;
 import com.home.tools.service.CacheService;
 import com.home.tools.service.MaintenanceRecordService;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +38,7 @@ public class MaintenanceRecordController {
     }
 
     @GetMapping("/due")
-    public ApiResponse<List<MaintenanceRecord>> findDueMaintenance() {
+    public ApiResponse<List<Tool>> findDueMaintenance() {
         return ApiResponse.ok(maintenanceRecordService.findDueMaintenance());
     }
 

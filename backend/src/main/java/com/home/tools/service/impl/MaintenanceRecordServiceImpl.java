@@ -56,16 +56,8 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
     }
 
     @Override
-    public List<MaintenanceRecord> findDueMaintenance() {
-        List<Tool> dueTools = toolRepository.findByNextMaintenanceDateLessThanEqual(LocalDate.now());
-        List<MaintenanceRecord> records = new ArrayList<>();
-        for (Tool tool : dueTools) {
-            List<MaintenanceRecord> toolRecords = maintenanceRecordRepository.findByToolId(tool.getId());
-            if (!toolRecords.isEmpty()) {
-                records.add(toolRecords.get(0));
-            }
-        }
-        return records;
+    public List<Tool> findDueMaintenance() {
+        return toolRepository.findByNextMaintenanceDateLessThanEqual(LocalDate.now());
     }
 
     @Override

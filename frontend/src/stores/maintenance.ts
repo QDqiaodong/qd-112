@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { MaintenanceRecord } from '@/types'
+import type { MaintenanceRecord, Tool } from '@/types'
 import * as maintenanceApi from '@/api/maintenance'
 
 export const useMaintenanceStore = defineStore('maintenance', () => {
   const maintenanceRecords = ref<MaintenanceRecord[]>([])
-  const dueMaintenance = ref<MaintenanceRecord[]>([])
+  const dueMaintenance = ref<Tool[]>([])
   const total = ref(0)
   const loading = ref(false)
 

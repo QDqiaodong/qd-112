@@ -3,6 +3,7 @@ package com.home.tools.service;
 import com.home.tools.dto.MaintenanceRecordDTO;
 import com.home.tools.dto.PageResult;
 import com.home.tools.entity.MaintenanceRecord;
+import com.home.tools.entity.Tool;
 import java.util.List;
 
 public interface MaintenanceRecordService {
@@ -11,7 +12,7 @@ public interface MaintenanceRecordService {
 
     List<MaintenanceRecord> findByToolId(Long toolId);
 
-    List<MaintenanceRecord> findDueMaintenance();
+    List<Tool> findDueMaintenance();
 
     MaintenanceRecord create(MaintenanceRecordDTO dto);
 

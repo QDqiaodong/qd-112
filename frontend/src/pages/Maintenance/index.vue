@@ -62,8 +62,8 @@
           class="bg-white rounded-lg p-5 shadow-sm card-hover border-l-4"
           :class="isOverdue(item.nextMaintenanceDate) ? 'border-accent' : 'border-primary'"
         >
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="font-semibold text-gray-800">工具ID: {{ item.toolId }}</h4>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-gray-800">{{ item.name }}</h4>
             <span
               class="text-xs px-2 py-0.5 rounded"
               :class="isOverdue(item.nextMaintenanceDate) ? 'bg-orange-100 text-accent' : 'bg-blue-100 text-primary'"
@@ -71,8 +71,17 @@
               {{ isOverdue(item.nextMaintenanceDate) ? '已逾期' : '即将到期' }}
             </span>
           </div>
-          <p class="text-sm text-gray-500">下次保养：{{ item.nextMaintenanceDate }}</p>
-          <p class="text-sm text-gray-500 mt-1">类型：{{ typeMap[item.maintenanceType] || item.maintenanceType }}</p>
+          <div class="space-y-1 text-sm text-gray-500">
+            <p>工具ID: {{ item.id }}</p>
+            <p>型号：{{ item.model || '-' }}</p>
+            <p>品牌：{{ item.brand || '-' }}</p>
+            <p>位置：{{ normalizeLocationForDisplay(item.location) }}</p>
+            <p>下次保养：{{ item.nextMaintenanceDate || '-' }}</p>
+            <p>保养周期：{{ item.maintenanceCycleDays ? item.maintenanceCycleDays + ' 天' : '未设置' }}</p>
+          </div>
+          <div class="mt-3 pt-3 border-t border-gray-100">
+            <StatusBadge :status="item.status" />
+          </div>
         </div>
       </div>
       <div v-else class="text-center py-20 text-gray-400">暂无到期保养提醒</div>
@@ -123,7 +132,9 @@ import { Plus } from 'lucide-vue-next'
 import { useMaintenanceStore } from '@/stores/maintenance'
 import { useCategoryStore } from '@/stores/category'
 import CategoryCascade from '@/components/CategoryCascade.vue'
+import StatusBadge from '@/components/StatusBadge.vue'
 import { usePagination } from '@/composables/usePagination'
+import { normalizeLocationForDisplay } from '@/utils/location'
 import type { MaintenanceType } from '@/types'
 
 const maintenanceStore = useMaintenanceStore()

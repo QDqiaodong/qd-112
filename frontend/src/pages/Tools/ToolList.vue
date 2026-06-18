@@ -277,7 +277,8 @@ function loadData() {
     page: pagination.page.value,
     size: pagination.size.value,
     keyword: keyword.value || undefined,
-    categoryId: categoryFilter.categoryId
+    categoryId: categoryFilter.categoryId,
+    subCategoryId: categoryFilter.subCategoryId
   })
 }
 

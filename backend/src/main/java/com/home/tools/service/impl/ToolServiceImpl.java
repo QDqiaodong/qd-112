@@ -51,10 +51,12 @@ public class ToolServiceImpl implements ToolService {
     }
 
     @Override
-    public PageResult<Tool> list(Integer page, Integer size, String keyword, Long categoryId) {
+    public PageResult<Tool> list(Integer page, Integer size, String keyword, Long categoryId, Long subCategoryId) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Tool> result;
-        if (categoryId != null) {
+        if (subCategoryId != null) {
+            result = toolRepository.findBySubCategoryId(subCategoryId, pageable);
+        } else if (categoryId != null) {
             result = toolRepository.findByCategoryId(categoryId, pageable);
         } else if (StringUtils.hasText(keyword)) {
             result = toolRepository.findByNameContainingOrModelContainingOrBrandContaining(keyword, keyword, keyword, pageable);
@@ -65,10 +67,12 @@ public class ToolServiceImpl implements ToolService {
     }
 
     @Override
-    public PageResult<ToolWithScore> listWithScore(Integer page, Integer size, String keyword, Long categoryId) {
+    public PageResult<ToolWithScore> listWithScore(Integer page, Integer size, String keyword, Long categoryId, Long subCategoryId) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Tool> result;
-        if (categoryId != null) {
+        if (subCategoryId != null) {
+            result = toolRepository.findBySubCategoryId(subCategoryId, pageable);
+        } else if (categoryId != null) {
             result = toolRepository.findByCategoryId(categoryId, pageable);
         } else if (StringUtils.hasText(keyword)) {
             result = toolRepository.findByNameContainingOrModelContainingOrBrandContaining(keyword, keyword, keyword, pageable);
