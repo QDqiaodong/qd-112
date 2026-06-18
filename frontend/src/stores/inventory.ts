@@ -61,8 +61,9 @@ export const useInventoryStore = defineStore('inventory', () => {
     }
   }
 
-  async function createInventory() {
-    const res = await inventoryApi.createInventory()
+  async function createInventory(data?: Record<string, any>) {
+    const payload = data || { operator: '系统管理员' }
+    const res = await inventoryApi.createInventory(payload)
     return res.data
   }
 

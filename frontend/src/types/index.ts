@@ -105,6 +105,7 @@ export interface Inventory {
 }
 
 export interface InventoryDTO {
+  inventoryDate?: string
   operator?: string
   remarks?: string
 }

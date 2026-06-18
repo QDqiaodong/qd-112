@@ -136,9 +136,15 @@ public class InventoryServiceImpl implements InventoryService {
                 .filter(i -> i.getToolId().equals(dto.getToolId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("InventoryItem not found"));
-        item.setActualStatus(dto.getActualStatus());
-        item.setChecked(dto.getChecked());
-        item.setRemarks(dto.getRemarks());
+        if (dto.getActualStatus() != null) {
+            item.setActualStatus(dto.getActualStatus());
+        }
+        if (dto.getChecked() != null) {
+            item.setChecked(dto.getChecked());
+        }
+        if (dto.getRemarks() != null) {
+            item.setRemarks(dto.getRemarks());
+        }
 
         InventoryItem saved = inventoryItemRepository.save(item);
 
