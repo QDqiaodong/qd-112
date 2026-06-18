@@ -146,3 +146,26 @@ CREATE TABLE IF NOT EXISTS part_replacement (
     INDEX idx_replacement_date (replacement_date),
     INDEX idx_part_type (part_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS tool_kit (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    scenario VARCHAR(200),
+    sort_order INT DEFAULT 0,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS tool_kit_item (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    kit_id BIGINT NOT NULL,
+    tool_id BIGINT NOT NULL,
+    quantity INT DEFAULT 1,
+    remarks TEXT,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_kit_id (kit_id),
+    INDEX idx_tool_id (tool_id),
+    UNIQUE KEY uk_kit_tool (kit_id, tool_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

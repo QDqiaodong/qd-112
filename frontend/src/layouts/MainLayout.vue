@@ -26,13 +26,14 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { Wrench, Hammer, Clock, Shield, ClipboardList, FolderTree, LayoutGrid, CalendarDays, BarChart3, GitBranch, Replace } from 'lucide-vue-next'
+import { Wrench, Hammer, Clock, Shield, ClipboardList, FolderTree, LayoutGrid, CalendarDays, BarChart3, GitBranch, Replace, PieChart, Briefcase } from 'lucide-vue-next'
 
 const route = useRoute()
 
 const navItems = [
   { path: '/', label: '首页', icon: Wrench },
   { path: '/tools', label: '工具管理', icon: Hammer },
+  { path: '/tool-kits', label: '维修工具包', icon: Briefcase },
   { path: '/location-matrix', label: '位置矩阵', icon: LayoutGrid },
   { path: '/usage', label: '使用记录', icon: Clock },
   { path: '/scenario-analysis', label: '场景分析', icon: BarChart3 },
@@ -40,6 +41,7 @@ const navItems = [
   { path: '/maintenance-calendar', label: '保养日程月历', icon: CalendarDays },
   { path: '/part-replacement', label: '零件更换', icon: Replace },
   { path: '/inventory', label: '盘点管理', icon: ClipboardList },
+  { path: '/cost-summary', label: '费用汇总', icon: PieChart },
   { path: '/categories', label: '分类管理', icon: FolderTree },
   { path: '/category-tree', label: '分类树维护', icon: GitBranch }
 ]

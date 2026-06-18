@@ -77,6 +77,16 @@ const router = createRouter({
           path: 'part-replacement',
           name: 'PartReplacement',
           component: () => import('@/pages/PartReplacement/index.vue')
+        },
+        {
+          path: 'cost-summary',
+          name: 'CostSummary',
+          component: () => import('@/pages/CostSummary/index.vue')
+        },
+        {
+          path: 'tool-kits',
+          name: 'ToolKits',
+          component: () => import('@/pages/ToolKits/index.vue')
         }
       ]
     }

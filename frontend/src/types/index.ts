@@ -357,3 +357,60 @@ export interface ToolWithScore {
   tool: Tool
   availabilityScore: ToolAvailabilityScore
 }
+
+export interface CostSummary {
+  groupKey: string
+  groupType: 'CATEGORY' | 'LOCATION' | 'MONTH'
+  purchaseCost: number
+  maintenanceCost: number
+  partReplacementCost: number
+  totalCost: number
+  toolCount: number
+}
+
+export interface ToolKit {
+  id: number
+  name: string
+  description: string
+  scenario: string
+  sortOrder: number
+  createTime: string
+  updateTime: string
+}
+
+export interface ToolKitDTO {
+  name: string
+  description?: string
+  scenario?: string
+  sortOrder?: number
+}
+
+export interface ToolKitItem {
+  id: number
+  kitId: number
+  toolId: number
+  quantity: number
+  remarks: string
+  createTime: string
+}
+
+export interface ToolKitItemDTO {
+  toolId: number
+  quantity?: number
+  remarks?: string
+}
+
+export interface ToolKitItemDetail {
+  item: ToolKitItem
+  tool: Tool
+  available: boolean
+  missingReason: string
+}
+
+export interface ToolKitWithItems {
+  kit: ToolKit
+  items: ToolKitItemDetail[]
+  totalItems: number
+  availableItems: number
+  missingItems: number
+}
