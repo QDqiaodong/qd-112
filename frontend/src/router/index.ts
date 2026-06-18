@@ -87,6 +87,11 @@ const router = createRouter({
           path: 'tool-kits',
           name: 'ToolKits',
           component: () => import('@/pages/ToolKits/index.vue')
+        },
+        {
+          path: 'loan-records',
+          name: 'LoanRecords',
+          component: () => import('@/pages/LoanRecords/index.vue')
         }
       ]
     }

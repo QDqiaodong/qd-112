@@ -169,3 +169,22 @@ CREATE TABLE IF NOT EXISTS tool_kit_item (
     INDEX idx_tool_id (tool_id),
     UNIQUE KEY uk_kit_tool (kit_id, tool_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS loan_record (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    tool_id BIGINT NOT NULL,
+    borrower VARCHAR(100) NOT NULL,
+    loan_date DATE,
+    expected_return_date DATE,
+    actual_return_date DATE,
+    status VARCHAR(20) NOT NULL DEFAULT 'BORROWED',
+    return_status VARCHAR(20),
+    operator VARCHAR(50),
+    remarks TEXT,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_tool_id (tool_id),
+    INDEX idx_status (status),
+    INDEX idx_loan_date (loan_date),
+    INDEX idx_borrower (borrower)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

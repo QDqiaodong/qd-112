@@ -414,3 +414,33 @@ export interface ToolKitWithItems {
   availableItems: number
   missingItems: number
 }
+
+export type LoanStatus = 'BORROWED' | 'RETURNED'
+export type ReturnStatus = 'GOOD' | 'DAMAGED' | 'LOST'
+
+export interface LoanRecord {
+  id: number
+  toolId: number
+  borrower: string
+  loanDate: string
+  expectedReturnDate: string
+  actualReturnDate: string
+  status: LoanStatus
+  returnStatus: ReturnStatus
+  operator: string
+  remarks: string
+  createTime: string
+  updateTime: string
+}
+
+export interface LoanRecordDTO {
+  toolId: number
+  borrower: string
+  loanDate?: string
+  expectedReturnDate?: string
+  actualReturnDate?: string
+  status?: LoanStatus
+  returnStatus?: ReturnStatus
+  operator?: string
+  remarks?: string
+}

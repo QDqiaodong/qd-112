@@ -102,6 +102,17 @@ export const useToolStore = defineStore('tool', () => {
     return res.data.list
   }
 
+  async function fetchAllTools() {
+    loading.value = true
+    try {
+      const res = await toolApi.getTools({ page: 1, size: 9999 })
+      tools.value = res.data.list
+      total.value = res.data.total
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchMonthlyMaintenance(year: number, month: number) {
     loading.value = true
     try {
@@ -131,6 +142,7 @@ export const useToolStore = defineStore('tool', () => {
     updateTool,
     deleteTool,
     fetchToolOptions,
+    fetchAllTools,
     fetchMonthlyMaintenance
   }
 })
