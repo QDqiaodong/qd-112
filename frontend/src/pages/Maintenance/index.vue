@@ -15,6 +15,7 @@
         <el-radio-button value="list">列表视图</el-radio-button>
         <el-radio-button value="due">到期提醒</el-radio-button>
       </el-radio-group>
+      <CategoryCascade v-model="categoryFilter" />
     </div>
 
     <div v-if="viewMode === 'list'">
@@ -120,14 +121,18 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from 'lucide-vue-next'
 import { useMaintenanceStore } from '@/stores/maintenance'
+import { useCategoryStore } from '@/stores/category'
+import CategoryCascade from '@/components/CategoryCascade.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { MaintenanceType } from '@/types'
 
 const maintenanceStore = useMaintenanceStore()
+const categoryStore = useCategoryStore()
 const pagination = usePagination()
 const showDialog = ref(false)
 const formRef = ref<FormInstance>()
 const viewMode = ref('list')
+const categoryFilter = reactive({ categoryId: undefined as number | undefined, subCategoryId: undefined as number | undefined })
 
 const typeMap: Record<string, string> = {
   CLEAN: '清洁',
@@ -159,12 +164,18 @@ const rules: FormRules = {
 }
 
 onMounted(() => {
+  categoryStore.fetchCategoryTreeWithStats()
   loadData()
   maintenanceStore.fetchDue()
 })
 
 function loadData() {
-  maintenanceStore.fetchMaintenance({ page: pagination.page.value, size: pagination.size.value })
+  maintenanceStore.fetchMaintenance({
+    page: pagination.page.value,
+    size: pagination.size.value,
+    categoryId: categoryFilter.categoryId || undefined,
+    subCategoryId: categoryFilter.subCategoryId || undefined
+  })
 }
 
 function handleViewChange() {

@@ -268,7 +268,7 @@ const sortedTools = computed(() => {
 })
 
 onMounted(() => {
-  categoryStore.fetchCategoryTree()
+  categoryStore.fetchCategoryTreeWithStats()
   loadData()
 })
 

@@ -68,10 +68,35 @@ public class CategoryServiceImpl implements CategoryService {
 
         Map<Long, Integer> toolCountMap = new HashMap<>();
         Map<Long, Integer> maintenanceCountMap = new HashMap<>();
+        Map<Long, Integer> defaultCycleDaysMap = new HashMap<>();
 
         for (Category cat : allCategories) {
             toolCountMap.put(cat.getId(), 0);
             maintenanceCountMap.put(cat.getId(), 0);
+            defaultCycleDaysMap.put(cat.getId(), null);
+        }
+
+        Map<String, Integer> itemCycleMap = new HashMap<>();
+        for (MaintenanceItem mi : allMaintenanceItems) {
+            itemCycleMap.put(mi.getCode(), mi.getDefaultCycleDays() != null ? mi.getDefaultCycleDays() : 0);
+        }
+
+        Map<Long, Integer> categoryMinCycleMap = new HashMap<>();
+        for (CategoryMaintenanceItem cmi : allCategoryItems) {
+            if (cmi.getEnabled() != null && cmi.getEnabled()) {
+                int cycle;
+                if (cmi.getCustomCycleDays() != null) {
+                    cycle = cmi.getCustomCycleDays();
+                } else {
+                    cycle = itemCycleMap.getOrDefault(cmi.getMaintenanceItemCode(), 0);
+                }
+                if (cycle > 0) {
+                    categoryMinCycleMap.merge(cmi.getCategoryId(), cycle, Math::min);
+                }
+            }
+        }
+        for (Map.Entry<Long, Integer> entry : categoryMinCycleMap.entrySet()) {
+            defaultCycleDaysMap.put(entry.getKey(), entry.getValue());
         }
 
         for (Tool tool : allTools) {
@@ -92,7 +117,7 @@ public class CategoryServiceImpl implements CategoryService {
         int totalMaintenanceItems = allMaintenanceItems.size();
 
         List<CategoryTreeNode> tree = buildTreeWithStats(
-            allCategories, null, toolCountMap, maintenanceCountMap, totalMaintenanceItems
+            allCategories, null, toolCountMap, maintenanceCountMap, totalMaintenanceItems, defaultCycleDaysMap
         );
 
         tree.sort(Comparator.comparing(n -> n.getSortOrder() != null ? n.getSortOrder() : 0));
@@ -179,7 +204,8 @@ public class CategoryServiceImpl implements CategoryService {
     private List<CategoryTreeNode> buildTreeWithStats(List<Category> all, Long parentId,
                                                        Map<Long, Integer> toolCountMap,
                                                        Map<Long, Integer> maintenanceCountMap,
-                                                       int totalMaintenanceItems) {
+                                                       int totalMaintenanceItems,
+                                                       Map<Long, Integer> defaultCycleDaysMap) {
         List<CategoryTreeNode> tree = new ArrayList<>();
         for (Category cat : all) {
             boolean isChild = (parentId == null && cat.getParentId() == null) ||
@@ -198,7 +224,7 @@ public class CategoryServiceImpl implements CategoryService {
                 int maintenanceCount = maintenanceCountMap.getOrDefault(cat.getId(), 0);
 
                 List<CategoryTreeNode> children = buildTreeWithStats(
-                    all, cat.getId(), toolCountMap, maintenanceCountMap, totalMaintenanceItems
+                    all, cat.getId(), toolCountMap, maintenanceCountMap, totalMaintenanceItems, defaultCycleDaysMap
                 );
 
                 for (CategoryTreeNode child : children) {
@@ -207,12 +233,15 @@ public class CategoryServiceImpl implements CategoryService {
                         child.getMaintenanceItemCount() != null ? child.getMaintenanceItemCount() : 0);
                 }
 
+                Integer categoryCycle = defaultCycleDaysMap.get(cat.getId());
+
                 node.setToolCount(toolCount);
                 node.setMaintenanceItemCount(maintenanceCount);
                 node.setMaintenanceItemTotal(totalMaintenanceItems);
                 node.setMaintenanceCoverageRate(
                     totalMaintenanceItems > 0 ? (maintenanceCount * 100.0 / totalMaintenanceItems) : 0.0
                 );
+                node.setDefaultCycleDays(categoryCycle);
                 node.setChildren(children);
 
                 tree.add(node);

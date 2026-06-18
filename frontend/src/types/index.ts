@@ -204,6 +204,7 @@ export interface CategoryTreeNode {
   maintenanceItemCount: number
   maintenanceItemTotal: number
   maintenanceCoverageRate: number
+  defaultCycleDays: number
   children: CategoryTreeNode[]
 }
 

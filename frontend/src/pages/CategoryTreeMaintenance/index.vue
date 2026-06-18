@@ -15,6 +15,10 @@
             <span>工具数量</span>
           </div>
           <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+            <span>默认保养周期</span>
+          </div>
+          <div class="flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-green-500"></span>
             <span>保养项覆盖率</span>
           </div>
@@ -43,6 +47,10 @@
               <div class="flex items-center gap-1 text-xs">
                 <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                 <span class="text-gray-600">{{ data.toolCount }} 件</span>
+              </div>
+              <div v-if="data.defaultCycleDays" class="flex items-center gap-1 text-xs">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="text-gray-600">{{ data.defaultCycleDays }}天</span>
               </div>
               <div class="flex items-center gap-1 text-xs">
                 <span class="w-2 h-2 rounded-full bg-green-500"></span>

@@ -15,6 +15,7 @@ public class CategoryTreeNode {
     private Integer maintenanceItemCount;
     private Integer maintenanceItemTotal;
     private Double maintenanceCoverageRate;
+    private Integer defaultCycleDays;
     private List<CategoryTreeNode> children;
 
     public Long getId() { return id; }
@@ -39,6 +40,8 @@ public class CategoryTreeNode {
     public void setMaintenanceItemTotal(Integer maintenanceItemTotal) { this.maintenanceItemTotal = maintenanceItemTotal; }
     public Double getMaintenanceCoverageRate() { return maintenanceCoverageRate; }
     public void setMaintenanceCoverageRate(Double maintenanceCoverageRate) { this.maintenanceCoverageRate = maintenanceCoverageRate; }
+    public Integer getDefaultCycleDays() { return defaultCycleDays; }
+    public void setDefaultCycleDays(Integer defaultCycleDays) { this.defaultCycleDays = defaultCycleDays; }
     public List<CategoryTreeNode> getChildren() { return children; }
     public void setChildren(List<CategoryTreeNode> children) { this.children = children; }
 }

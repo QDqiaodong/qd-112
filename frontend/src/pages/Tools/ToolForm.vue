@@ -32,8 +32,19 @@
           <el-input-number v-model="form.price" :min="0" :precision="2" />
         </el-form-item>
         <el-form-item label="保养周期" prop="maintenanceCycleDays">
-          <el-input-number v-model="form.maintenanceCycleDays" :min="0" />
-          <span class="ml-2 text-sm text-gray-400">天</span>
+          <div class="flex items-center gap-2 w-full">
+            <el-input-number v-model="form.maintenanceCycleDays" :min="0" class="flex-1" />
+            <span class="text-sm text-gray-400 shrink-0">天</span>
+            <el-tag
+              v-if="categoryDefaultCycle"
+              size="small"
+              type="warning"
+              effect="plain"
+              class="shrink-0"
+            >
+              分类默认: {{ categoryDefaultCycle }}天
+            </el-tag>
+          </div>
         </el-form-item>
         <el-form-item v-if="isEdit" label="工具状态" prop="status">
           <div class="mb-2">
@@ -86,7 +97,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { useToolStore } from '@/stores/tool'
 import { useCategoryStore } from '@/stores/category'
 import CategoryCascade from '@/components/CategoryCascade.vue'
-import type { ToolStatus, Tool } from '@/types'
+import type { ToolStatus, Tool, CategoryTreeNode } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -122,11 +133,44 @@ const statusChanged = computed(() => {
   return form.status !== originalStatus.value
 })
 
+const categoryDefaultCycle = computed(() => {
+  if (!form.categoryId) return undefined
+  const selectedCat = categoryStore.categoryTreeWithStats.find(
+    (c: CategoryTreeNode) => c.id === form.categoryId
+  )
+  if (!selectedCat) return undefined
+  if (form.subCategoryId && selectedCat.children) {
+    const subCat = selectedCat.children.find((s: CategoryTreeNode) => s.id === form.subCategoryId)
+    return subCat?.defaultCycleDays || selectedCat.defaultCycleDays
+  }
+  return selectedCat.defaultCycleDays
+})
+
 const categoryValue = computed({
   get: () => ({ categoryId: form.categoryId, subCategoryId: form.subCategoryId }),
   set: (val) => {
+    const oldCategoryId = form.categoryId
+    const oldSubCategoryId = form.subCategoryId
     form.categoryId = val.categoryId
     form.subCategoryId = val.subCategoryId
+    if (!isEdit.value) {
+      const selectedCat = categoryStore.categoryTreeWithStats.find(
+        (c: CategoryTreeNode) => c.id === val.categoryId
+      )
+      let defaultCycle: number | undefined
+      if (val.subCategoryId && selectedCat?.children) {
+        const subCat = selectedCat.children.find((s: CategoryTreeNode) => s.id === val.subCategoryId)
+        defaultCycle = subCat?.defaultCycleDays
+      } else {
+        defaultCycle = selectedCat?.defaultCycleDays
+      }
+      if (defaultCycle && !form.maintenanceCycleDays) {
+        form.maintenanceCycleDays = defaultCycle
+      }
+      if (val.categoryId !== oldCategoryId || val.subCategoryId !== oldSubCategoryId) {
+        form.maintenanceCycleDays = defaultCycle || form.maintenanceCycleDays
+      }
+    }
   }
 })
 
@@ -217,7 +261,7 @@ const rules: FormRules = {
 }
 
 onMounted(async () => {
-  await categoryStore.fetchCategoryTree()
+  await categoryStore.fetchCategoryTreeWithStats()
   if (isEdit.value) {
     const tool = await toolStore.fetchTool(Number(route.params.id))
     if (tool) {

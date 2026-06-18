@@ -3,16 +3,28 @@
     <h2 class="text-2xl font-bold text-gray-800 mb-6">分类管理</h2>
 
     <div class="flex gap-6">
-      <div class="w-72 bg-white rounded-lg p-5 shadow-sm shrink-0">
+      <div class="w-80 bg-white rounded-lg p-5 shadow-sm shrink-0">
         <h3 class="text-lg font-semibold text-gray-700 mb-4">分类树</h3>
         <el-tree
-          :data="categoryStore.categoryTree"
+          :data="categoryStore.categoryTreeWithStats"
           :props="{ children: 'children', label: 'name' }"
           node-key="id"
           highlight-current
           default-expand-all
           @node-click="handleNodeClick"
-        />
+        >
+          <template #default="{ data }">
+            <div class="flex items-center gap-2 w-full">
+              <span class="truncate">{{ data.name }}</span>
+              <el-tag size="small" type="info" effect="plain" class="!text-xs !px-1.5 !py-0 shrink-0">
+                {{ data.toolCount }}件
+              </el-tag>
+              <el-tag v-if="data.defaultCycleDays" size="small" type="warning" effect="plain" class="!text-xs !px-1.5 !py-0 shrink-0">
+                {{ data.defaultCycleDays }}天
+              </el-tag>
+            </div>
+          </template>
+        </el-tree>
       </div>
 
       <div class="flex-1">
@@ -27,6 +39,22 @@
             <p><span class="text-gray-500">层级：</span>{{ selectedCategory.level }}</p>
             <p><span class="text-gray-500">排序：</span>{{ selectedCategory.sortOrder }}</p>
             <p><span class="text-gray-500">描述：</span>{{ selectedCategory.description || '-' }}</p>
+            <div class="flex items-center gap-4 pt-2 border-t border-gray-100 mt-2">
+              <div class="flex items-center gap-1">
+                <el-tag size="small" type="info" effect="plain">{{ selectedCategory.toolCount }} 件工具</el-tag>
+              </div>
+              <div class="flex items-center gap-1">
+                <el-tag v-if="selectedCategory.defaultCycleDays" size="small" type="warning" effect="plain">
+                  默认保养周期: {{ selectedCategory.defaultCycleDays }} 天
+                </el-tag>
+                <el-tag v-else size="small" effect="plain">未配置保养周期</el-tag>
+              </div>
+              <div class="flex items-center gap-1">
+                <el-tag size="small" effect="plain">
+                  保养项: {{ selectedCategory.maintenanceItemCount }}/{{ selectedCategory.maintenanceItemTotal }}
+                </el-tag>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -109,17 +137,17 @@ import { ref, onMounted } from 'vue'
 import { useCategoryStore } from '@/stores/category'
 import { Delete } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
-import type { Category, CategoryDeletionCheck } from '@/types'
+import type { CategoryTreeNode, CategoryDeletionCheck } from '@/types'
 
 const categoryStore = useCategoryStore()
-const selectedCategory = ref<Category | null>(null)
+const selectedCategory = ref<CategoryTreeNode | null>(null)
 const deleteDialogVisible = ref(false)
 const deletionCheckResult = ref<CategoryDeletionCheck | null>(null)
 const deleting = ref(false)
 
-onMounted(() => categoryStore.fetchCategoryTree())
+onMounted(() => categoryStore.fetchCategoryTreeWithStats())
 
-function handleNodeClick(node: Category) {
+function handleNodeClick(node: CategoryTreeNode) {
   selectedCategory.value = node
   categoryStore.fetchMaintenanceItems(node.id)
 }
