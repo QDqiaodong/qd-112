@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import * as echarts from 'echarts'
 import { Hammer, Shield, Clock, CheckCircle } from 'lucide-vue-next'
@@ -111,6 +111,7 @@ const route = useRoute()
 const overview = computed(() => dashboardStore.overview)
 const chartRef = ref<HTMLElement>()
 let chartInstance: echarts.ECharts | null = null
+let resizeObserver: ResizeObserver | null = null
 
 const totalToolsCount = computed(() => {
   if (!overview.value?.statusCounts) return 0
@@ -132,16 +133,58 @@ async function loadOverview() {
 
 onMounted(() => {
   loadOverview()
+  window.addEventListener('resize', handleResize)
+  if (chartRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      handleResize()
+    })
+    resizeObserver.observe(chartRef.value)
+  }
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  disposeChart()
+})
+
+function handleResize() {
+  if (chartInstance) {
+    chartInstance.resize()
+  }
+}
+
+function disposeChart() {
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
+}
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
-    loadOverview()
+    nextTick(() => {
+      if (!chartInstance && chartRef.value) {
+        initChart()
+      } else {
+        handleResize()
+        updateChart()
+      }
+    })
   }
 })
 
 watch(() => overview.value?.categoryStats, () => {
-  nextTick(() => initChart())
+  nextTick(() => {
+    if (chartInstance) {
+      updateChart()
+    } else {
+      initChart()
+    }
+  })
 }, { deep: true })
 
 function initChart() {
@@ -149,6 +192,11 @@ function initChart() {
   if (!chartInstance) {
     chartInstance = echarts.init(chartRef.value)
   }
+  updateChart()
+}
+
+function updateChart() {
+  if (!chartInstance) return
   const stats = overview.value?.categoryStats || []
   chartInstance.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
@@ -163,6 +211,6 @@ function initChart() {
         emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.3)' } }
       }
     ]
-  })
+  }, true)
 }
 </script>

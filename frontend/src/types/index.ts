@@ -230,6 +230,19 @@ export interface MaintenanceItem {
   createTime: string
 }
 
+export interface MaintenanceItemWithSource {
+  item: MaintenanceItem
+  sourceType: string
+  sourceCategoryId: string
+  sourceCategoryName: string
+  effectiveCycleDays: number
+  cycleSource: string
+  enabled: boolean
+  overridden: boolean
+  overriddenCycleDays: number
+  remarks: string
+}
+
 export interface PageResult<T> {
   list: T[]
   total: number

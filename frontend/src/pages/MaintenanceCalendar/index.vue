@@ -126,7 +126,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                   <Wrench :size="16" class="text-gray-400" />
-                  <span>保养项：{{ getDefaultMaintenanceItems(tool.categoryId) }}</span>
+                  <span>保养项：{{ getDefaultMaintenanceItems(tool.subCategoryId || tool.categoryId) }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <Calendar :size="16" class="text-gray-400" />
@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, Folder, Wrench, Calendar, Clock } from 'lucide-vue-next'
 import { useToolStore } from '@/stores/tool'
@@ -179,8 +179,21 @@ onMounted(() => {
   currentMonth.value = `${year}-${String(month).padStart(2, '0')}`
   loadData()
   categoryStore.fetchCategoryTree()
-  categoryStore.fetchMaintenanceItems()
 })
+
+watch(() => toolStore.monthlyMaintenanceTools, async (tools) => {
+  if (!tools || tools.length === 0) return
+  const categoryIds = new Set<number>()
+  for (const tool of tools) {
+    if (tool.subCategoryId) {
+      categoryIds.add(tool.subCategoryId)
+    } else if (tool.categoryId) {
+      categoryIds.add(tool.categoryId)
+    }
+  }
+  const promises = Array.from(categoryIds).map(id => categoryStore.fetchEffectiveMaintenanceItems(id))
+  await Promise.all(promises)
+}, { immediate: true })
 
 watch(currentMonth, () => {
   loadData()
@@ -385,10 +398,14 @@ function getCategoryName(categoryId: number): string {
   return findCategory(categoryStore.categoryTree, categoryId) || '未分类'
 }
 
-function getDefaultMaintenanceItems(_categoryId?: number): string {
-  const items = categoryStore.maintenanceItems
+function getDefaultMaintenanceItems(categoryId?: number): string {
+  if (!categoryId) return '暂无'
+  const items = categoryStore.getMaintenanceItemsByCategory(categoryId)
   if (!items || items.length === 0) return '暂无'
-  return items.map(item => item.name).join('、')
+  return items
+    .filter(item => item.enabled && item.item)
+    .map(item => item.item.name)
+    .join('、')
 }
 
 function goToToolDetail(id: number) {

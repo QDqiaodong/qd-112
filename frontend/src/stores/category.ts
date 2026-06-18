@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Category, CategoryTreeNode, MaintenanceItem, CategoryDeletionCheck } from '@/types'
+import type { Category, CategoryTreeNode, MaintenanceItem, MaintenanceItemWithSource, CategoryDeletionCheck } from '@/types'
 import * as categoryApi from '@/api/category'
 import { ElMessage } from 'element-plus'
 
@@ -8,6 +8,7 @@ export const useCategoryStore = defineStore('category', () => {
   const categoryTree = ref<Category[]>([])
   const categoryTreeWithStats = ref<CategoryTreeNode[]>([])
   const maintenanceItems = ref<MaintenanceItem[]>([])
+  const maintenanceItemsByCategory = ref<Record<number, MaintenanceItemWithSource[]>>({})
   const loading = ref(false)
   const deletionCheck = ref<CategoryDeletionCheck | null>(null)
 
@@ -71,6 +72,25 @@ export const useCategoryStore = defineStore('category', () => {
     maintenanceItems.value = res.data
   }
 
+  async function fetchEffectiveMaintenanceItems(categoryId: number): Promise<MaintenanceItemWithSource[]> {
+    if (maintenanceItemsByCategory.value[categoryId]) {
+      return maintenanceItemsByCategory.value[categoryId]
+    }
+    try {
+      const res = await categoryApi.getEffectiveMaintenanceItems(categoryId)
+      maintenanceItemsByCategory.value[categoryId] = res.data
+      return res.data
+    } catch (e) {
+      console.error('获取分类保养项失败', e)
+      return []
+    }
+  }
+
+  function getMaintenanceItemsByCategory(categoryId?: number): MaintenanceItemWithSource[] {
+    if (!categoryId) return []
+    return maintenanceItemsByCategory.value[categoryId] || []
+  }
+
   async function checkDeletion(id: number) {
     const res = await categoryApi.checkCategoryDeletion(id)
     deletionCheck.value = res.data
@@ -93,6 +113,7 @@ export const useCategoryStore = defineStore('category', () => {
     categoryTree,
     categoryTreeWithStats,
     maintenanceItems,
+    maintenanceItemsByCategory,
     loading,
     deletionCheck,
     fetchCategoryTree,
@@ -101,6 +122,8 @@ export const useCategoryStore = defineStore('category', () => {
     updateCategory,
     updateSortOrder,
     fetchMaintenanceItems,
+    fetchEffectiveMaintenanceItems,
+    getMaintenanceItemsByCategory,
     checkDeletion,
     deleteCategory
   }
