@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS tool (
     last_maintenance_date DATE,
     next_maintenance_date DATE,
     maintenance_cycle_days INT DEFAULT 90,
+    last_use_date DATE,
+    last_operator VARCHAR(50),
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_category (category_id),

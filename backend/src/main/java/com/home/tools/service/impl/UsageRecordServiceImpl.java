@@ -4,7 +4,10 @@ import com.home.tools.dto.PageResult;
 import com.home.tools.dto.ScenarioAnalysisDTO;
 import com.home.tools.dto.ScenarioToolDTO;
 import com.home.tools.dto.UsageRecordDTO;
+import com.home.tools.entity.Tool;
+import com.home.tools.entity.ToolStatus;
 import com.home.tools.entity.UsageRecord;
+import com.home.tools.exception.ConflictException;
 import com.home.tools.repository.ToolRepository;
 import com.home.tools.repository.UsageRecordRepository;
 import com.home.tools.service.UsageRecordService;
@@ -13,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -51,13 +55,47 @@ public class UsageRecordServiceImpl implements UsageRecordService {
     }
 
     @Override
+    @Transactional
     public UsageRecord create(UsageRecordDTO dto) {
-        if (!toolRepository.existsById(dto.getToolId())) {
-            throw new RuntimeException("工具不存在，无法创建使用记录");
+        Tool tool = toolRepository.findById(dto.getToolId())
+                .orElseThrow(() -> new RuntimeException("工具不存在，无法创建使用记录"));
+
+        ToolStatus status = tool.getStatus();
+        if (status == ToolStatus.LOST) {
+            throw new RuntimeException("工具已遗失，禁止新增使用记录");
         }
+        if (status == ToolStatus.MAINTENANCE) {
+            throw new ConflictException(buildMaintenanceConflictReason(tool));
+        }
+
         UsageRecord record = new UsageRecord();
         copyDtoToEntity(dto, record);
-        return usageRecordRepository.save(record);
+        UsageRecord saved = usageRecordRepository.save(record);
+
+        syncToolLatestUsage(tool, saved);
+        toolRepository.save(tool);
+
+        return saved;
+    }
+
+    private String buildMaintenanceConflictReason(Tool tool) {
+        String lastMaintenance = tool.getLastMaintenanceDate() != null
+                ? tool.getLastMaintenanceDate().toString() : "暂无";
+        String nextMaintenance = tool.getNextMaintenanceDate() != null
+                ? tool.getNextMaintenanceDate().toString() : "暂无";
+        return String.format("工具正在保养中，与新增使用记录冲突。最近保养日期：%s，预计下次保养日期：%s",
+                lastMaintenance, nextMaintenance);
+    }
+
+    private void syncToolLatestUsage(Tool tool, UsageRecord record) {
+        LocalDate useDate = record.getUseDate();
+        if (useDate == null) {
+            return;
+        }
+        if (tool.getLastUseDate() == null || !useDate.isBefore(tool.getLastUseDate())) {
+            tool.setLastUseDate(useDate);
+            tool.setLastOperator(record.getOperator());
+        }
     }
 
     @Override

@@ -46,6 +46,10 @@ public class Tool {
 
     private Integer maintenanceCycleDays;
 
+    private LocalDate lastUseDate;
+
+    private String lastOperator;
+
     @Column(updatable = false)
     private LocalDateTime createTime;
 
@@ -92,6 +96,10 @@ public class Tool {
     public void setNextMaintenanceDate(LocalDate nextMaintenanceDate) { this.nextMaintenanceDate = nextMaintenanceDate; }
     public Integer getMaintenanceCycleDays() { return maintenanceCycleDays; }
     public void setMaintenanceCycleDays(Integer maintenanceCycleDays) { this.maintenanceCycleDays = maintenanceCycleDays; }
+    public LocalDate getLastUseDate() { return lastUseDate; }
+    public void setLastUseDate(LocalDate lastUseDate) { this.lastUseDate = lastUseDate; }
+    public String getLastOperator() { return lastOperator; }
+    public void setLastOperator(String lastOperator) { this.lastOperator = lastOperator; }
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
     public LocalDateTime getUpdateTime() { return updateTime; }
