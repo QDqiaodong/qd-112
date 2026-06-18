@@ -72,6 +72,11 @@ const router = createRouter({
           path: 'maintenance-calendar',
           name: 'MaintenanceCalendar',
           component: () => import('@/pages/MaintenanceCalendar/index.vue')
+        },
+        {
+          path: 'part-replacement',
+          name: 'PartReplacement',
+          component: () => import('@/pages/PartReplacement/index.vue')
         }
       ]
     }

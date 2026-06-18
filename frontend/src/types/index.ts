@@ -327,6 +327,32 @@ export interface ToolAvailabilityScore {
   lastInventoryExpectedStatus: string
 }
 
+export type PartType = 'BLADE' | 'BATTERY' | 'DRILL_BIT' | 'MOTOR' | 'BEARING' | 'SEAL' | 'CABLE' | 'FILTER' | 'OTHER'
+
+export interface PartReplacement {
+  id: number
+  toolId: number
+  partName: string
+  partType: string
+  replacementDate: string
+  cost: number
+  operator: string
+  supplier: string
+  remarks: string
+  createTime: string
+}
+
+export interface PartReplacementDTO {
+  toolId: number
+  partName: string
+  partType?: string
+  replacementDate: string
+  cost?: number
+  operator?: string
+  supplier?: string
+  remarks?: string
+}
+
 export interface ToolWithScore {
   tool: Tool
   availabilityScore: ToolAvailabilityScore

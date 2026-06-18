@@ -130,3 +130,19 @@ CREATE TABLE IF NOT EXISTS tool_status_history (
     INDEX idx_tool_id (tool_id),
     INDEX idx_create_time (create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS part_replacement (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    tool_id BIGINT NOT NULL,
+    part_name VARCHAR(200) NOT NULL,
+    part_type VARCHAR(50),
+    replacement_date DATE NOT NULL,
+    cost DECIMAL(10,2) DEFAULT 0.00,
+    operator VARCHAR(50),
+    supplier VARCHAR(200),
+    remarks TEXT,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_tool_id (tool_id),
+    INDEX idx_replacement_date (replacement_date),
+    INDEX idx_part_type (part_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
